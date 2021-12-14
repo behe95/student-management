@@ -4,6 +4,8 @@
 #include <vector>
 #include <sstream>
 #include <windows.h>
+#include <string>
+
 using namespace std;
 
 enum ACCOUNT_TYPES
@@ -17,7 +19,14 @@ enum TABLE_HEADERS_CRED
     FIRST_NAME = 0,
     LAST_NAME = 1,
     USER_NAME = 2,
-    PASSWORD = 3
+    PASSWORD = 3,
+    STUDENT_ENROLL_STATUS = 4,
+};
+
+enum STUDENT_ENROLL_STATUS
+{
+    NOT_ENROLLED = 0,
+    ENROLLED = 1
 };
 
 const string TEACHER_CRED_FILE_NAME = "teacher_credentials.txt";
@@ -61,11 +70,14 @@ void show_teacher_dashboard();
 void show_student_dashboard();
 
 void show_profile();
+void show_teachers_list();
 void log_out();
 
 void calculate_width_of_table_columns(int total_rows, int total_columns, vector<vector<string>> datas, vector<int>* column_widths);
 void draw_table_cells(int total_rows, int total_columns, vector<vector<string>> datas, vector<int> column_widths);
 void draw_horizontal_line(vector<int> column_widths, char line_type);
+
+
 //CONSOLE_SCREEN_BUFFER_INFOR is a struct which stores information about console screen buffer
 CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
 
@@ -411,6 +423,8 @@ void sign_up()
                     << last_name << ","
                     << user_name << ","
                     << password;
+    if(account_type == ACCOUNT_TYPES::STUDENT)
+        output_file << "," << STUDENT_ENROLL_STATUS::NOT_ENROLLED;
 
     output_file.close();
 
@@ -522,6 +536,8 @@ void sign_in()
                     logged_in_user_info_vec.push_back(students_cred_vect[i][TABLE_HEADERS_CRED::FIRST_NAME]);
                     logged_in_user_info_vec.push_back(students_cred_vect[i][TABLE_HEADERS_CRED::LAST_NAME]);
                     logged_in_user_info_vec.push_back(students_cred_vect[i][TABLE_HEADERS_CRED::USER_NAME]);
+                    logged_in_user_info_vec.push_back("");
+                    logged_in_user_info_vec.push_back(students_cred_vect[i][TABLE_HEADERS_CRED::STUDENT_ENROLL_STATUS]);
                     get_danger_color();
                     cout << "User logged in with username !" << user_name << endl;
                     break;
@@ -716,6 +732,9 @@ void show_student_dashboard()
         case choices::SHOW_PROFILE:
             show_profile();
             break;
+        case choices::SHOW_TEACHERS:
+            show_teachers_list();
+            break;
         case choices::LOG_OUT:
             log_out();
             break;
@@ -746,11 +765,64 @@ void show_profile()
     draw_table_cells(cell_datas.size(), cell_datas[0].size(), cell_datas, column_widths);
     draw_horizontal_line(column_widths, '=');
 
+    if(account_type == ACCOUNT_TYPES::STUDENT && stoi(logged_in_user_info_vec[TABLE_HEADERS_CRED::STUDENT_ENROLL_STATUS]) == STUDENT_ENROLL_STATUS::NOT_ENROLLED)
+        cout << endl
+             << "********************* You are currently not enrolled to any teacher ********************" << endl
+             << "************************ Select a teacher from the Teachers List ***********************" << endl
+             << endl;
+
 
 
 
     system("pause");
 
+
+}
+
+void show_teachers_list()
+{
+    vector<vector<string>> cell_datas = {{"First Name", "Last Name", "User Name"}};
+    vector<int> column_widths;
+    string file_name = TEACHER_CRED_FILE_NAME;
+
+    ifstream input_file(file_name);
+
+    if(input_file.good())
+    {
+        while(!input_file.eof())
+            {
+                string temp_data = "";
+                vector<string> temp_vector;
+
+                getline(input_file, temp_data);
+                stringstream temp_stream(temp_data);
+
+                while(getline(temp_stream, temp_data, ','))
+                {
+                    temp_vector.push_back(temp_data);
+                }
+                cell_datas.push_back(temp_vector);
+            }
+            input_file.close();
+
+
+            calculate_width_of_table_columns(cell_datas.size(), cell_datas[0].size(), cell_datas, &column_widths);
+
+            draw_horizontal_line(column_widths, '=');
+            draw_table_cells(cell_datas.size(), cell_datas[0].size(), cell_datas, column_widths);
+            draw_horizontal_line(column_widths, '=');
+
+    }
+    else
+    {
+        cout << endl
+             << "********************* Sorry There is No Teacher Available in this School ********************" << endl
+             << "******************************** Try Again Later When Available *****************************" << endl
+             << endl;
+
+    }
+
+    system("pause");
 
 }
 
