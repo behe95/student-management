@@ -6,7 +6,22 @@
 #include <windows.h>
 using namespace std;
 
+enum ACCOUNT_TYPES
+{
+    TEACHER = 1,
+    STUDENT = 2
+};
 
+enum TABLE_HEADERS_CRED
+{
+    FIRST_NAME = 0,
+    LAST_NAME = 1,
+    USER_NAME = 2,
+    PASSWORD = 3
+};
+
+const string TEACHER_CRED_FILE_NAME = "teacher_credentials.txt";
+const string STUDENT_CRED_FILE_NAME = "student_credentials.txt";
 
 //function prototype to show main menu
 //return type void
@@ -39,10 +54,18 @@ void get_dark_color();
 
 //function prototype for showing account types menu
 //return type void
-//arguments 1
-//int pointer to account_type
-void show_account_types_menu(string* account_type);
+//arguments none
+void show_account_types_menu();
 
+void show_teacher_dashboard();
+void show_student_dashboard();
+
+void show_profile();
+void log_out();
+
+void calculate_width_of_table_columns(int total_rows, int total_columns, vector<vector<string>> datas, vector<int>* column_widths);
+void draw_table_cells(int total_rows, int total_columns, vector<vector<string>> datas, vector<int> column_widths);
+void draw_horizontal_line(vector<int> column_widths, char line_type);
 //CONSOLE_SCREEN_BUFFER_INFOR is a struct which stores information about console screen buffer
 CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
 
@@ -58,11 +81,22 @@ HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
 vector<vector<string>> teachers_cred_vect;
 vector<vector<string>> students_cred_vect;
 
+//string type variable
+//to store account type i.e. student account, teacher account etc.
+int account_type;
+
 //declaring boolean type variable
 //assigning false value by default
 //this variable will be used as a flag
 //to determine if a student or a teacher is logged in or not
 bool USER_LOGGED_IN = false;
+
+//declaring a vector of string type
+//to store logged in user info at the time of sign in authorization
+//first name
+//last name
+//user name
+vector<string> logged_in_user_info_vec;
 
 //main function where everything begins
 int main()
@@ -74,6 +108,9 @@ int main()
     //so to get the information we have to pass the memory address of the csbiInfo
     GetConsoleScreenBufferInfo(hStdout, &csbiInfo);
 
+
+
+
     //using infinite while loop to run the
     //program forver
     while(true)
@@ -81,6 +118,15 @@ int main()
         //calling the function
         //to show the main menu screen
         show_main_menu_screen();
+
+        while(USER_LOGGED_IN)
+        {
+            if(account_type == ACCOUNT_TYPES::TEACHER)
+                show_teacher_dashboard();
+            else if(account_type == ACCOUNT_TYPES::STUDENT)
+                show_student_dashboard();
+        }
+        system("cls");
 
     }
     return 0;
@@ -174,14 +220,21 @@ void show_main_menu_screen()
 
 }
 
+//function to execute sign up operation
 void sign_up()
 {
+    //clearing console screen
     system("cls");
 
-    string account_type;
 
-    show_account_types_menu(&account_type);
 
+    //calling the function
+    //to show the account types on the screen
+    //this function also asks the user to select account type
+    //validate the user input
+    show_account_types_menu();
+
+    //clearing console screen
     system("cls");
 
     get_secondary_color();
@@ -202,21 +255,26 @@ void sign_up()
          << "|================================================|" << endl << endl;
 
 
-
+    //string type variable to store file name
     string file_name;
 
-    if(account_type == "teacher")
-        file_name = "teacher_credentials.txt";
-    else if(account_type == "student")
-        file_name = "student_credentials.txt";
+    //depending on the account type we will use different file
+    //to store different account type's credentials
+    if(account_type == ACCOUNT_TYPES::TEACHER)
+        file_name = TEACHER_CRED_FILE_NAME;
+    else if(account_type == ACCOUNT_TYPES::STUDENT)
+        file_name = STUDENT_CRED_FILE_NAME;
 
+    //declaring and opening input file stream
     ifstream input_file(file_name);
+    //declaring and opening output file stream and also we are passing "ios::app" flag
+    //so that we can append the file instead of replacing the file
     ofstream output_file(file_name, ios::app);
 
 
 
 
-
+    //enum to refer table headers
     enum TABLE_HEADERS
     {
         FIRST_NAME = 0,
@@ -225,35 +283,57 @@ void sign_up()
         PASSWORD = 3
     };
 
+    //boolean variable
+    //to check if a username already exists in our database
     bool user_exists = false;
 
 
 
+    //if the file exists the this condition will execute
     if(input_file.good())
     {
+        //running a while loop and extracting datas from the filestream
+        //until we reach to the end of the file
         while(!input_file.eof())
             {
+                //this variable will store each line from the filestream temporarily
                 string temp_data = "";
+                //we will separate temp_data by comma delimeter
+                //and we will store those multiple datas in the
+                //temporary vector
                 vector<string> temp_vector;
 
+                //get lines from input file stream and store into temp_data variable
                 getline(input_file, temp_data);
+
+                //declaring a stringstream to convert the temp_data string into stream
                 stringstream temp_stream(temp_data);
 
+                //now we will separate datas from string stream by comma delimeter
+                //we will store push those data to the temporary vector
                 while(getline(temp_stream, temp_data, ','))
                 {
                     temp_vector.push_back(temp_data);
                 }
-                if(account_type == "teacher")
+
+                //depending on the account type we will store the temp vector to the original vector
+                if(account_type == ACCOUNT_TYPES::TEACHER)
                     teachers_cred_vect.push_back(temp_vector);
-                else if(account_type == "student")
+                else if(account_type == ACCOUNT_TYPES::STUDENT)
                     students_cred_vect.push_back(temp_vector);
             }
+
+            //as we are done with the input file stream
+            //now we can close the connection
             input_file.close();
 
     }
 
+    //string variables to store user information
     string first_name, last_name, user_name, password;
 
+    //this infinite loop will run until it gets non duplicated user name
+    //other it will break
     while(true)
     {
         get_warning_color();
@@ -280,7 +360,8 @@ void sign_up()
         ignore_stream_cin();
         cout << endl;
 
-        if(account_type == "teacher" && teachers_cred_vect.size() > 0)
+
+        if(account_type == ACCOUNT_TYPES::TEACHER && teachers_cred_vect.size() > 0)
         {
             for(int i = 0; i < teachers_cred_vect.size(); i++)
             {
@@ -298,7 +379,7 @@ void sign_up()
                 continue;
             }
         }
-        else if(account_type == "student" && students_cred_vect.size() > 0)
+        else if(account_type == ACCOUNT_TYPES::STUDENT && students_cred_vect.size() > 0)
         {
             for(int i = 0; i < students_cred_vect.size(); i++)
             {
@@ -322,9 +403,9 @@ void sign_up()
             break;
         }
     }
-    if(account_type == "teacher" && teachers_cred_vect.size() > 0)
+    if(account_type == ACCOUNT_TYPES::TEACHER && teachers_cred_vect.size() > 0)
         output_file << endl;
-    else if(account_type == "student" && students_cred_vect.size() > 0)
+    else if(account_type == ACCOUNT_TYPES::STUDENT && students_cred_vect.size() > 0)
         output_file << endl;
     output_file << first_name << ","
                     << last_name << ","
@@ -333,9 +414,9 @@ void sign_up()
 
     output_file.close();
 
-    if(account_type == "teacher")
+    if(account_type == ACCOUNT_TYPES::TEACHER)
         teachers_cred_vect.clear();
-    else if(account_type == "student")
+    else if(account_type == ACCOUNT_TYPES::STUDENT)
         students_cred_vect.clear();
 
     get_success_color();
@@ -349,31 +430,25 @@ void sign_in()
     system("cls");
     cout << "SIGN IN" << endl;
 
-    string account_type;
 
 
 
-    show_account_types_menu(&account_type);
+
+    show_account_types_menu();
 
 
 
     string file_name;
 
-    if(account_type == "teacher")
-        file_name = "teacher_credentials.txt";
-    else if(account_type == "student")
-        file_name = "student_credentials.txt";
+    if(account_type == ACCOUNT_TYPES::TEACHER)
+        file_name = TEACHER_CRED_FILE_NAME;
+    else if(account_type == ACCOUNT_TYPES::STUDENT)
+        file_name = STUDENT_CRED_FILE_NAME;
 
     ifstream input_file(file_name);
 
 
-    enum TABLE_HEADERS
-    {
-        FIRST_NAME = 0,
-        LAST_NAME = 1,
-        USER_NAME = 2,
-        PASSWORD = 3
-    };
+
 
     if(input_file.good())
     {
@@ -389,9 +464,9 @@ void sign_in()
                 {
                     temp_vector.push_back(temp_data);
                 }
-                if(account_type == "teacher")
+                if(account_type == ACCOUNT_TYPES::TEACHER)
                     teachers_cred_vect.push_back(temp_vector);
-                else if(account_type == "student")
+                else if(account_type == ACCOUNT_TYPES::STUDENT)
                     students_cred_vect.push_back(temp_vector);
             }
             input_file.close();
@@ -414,13 +489,16 @@ void sign_in()
         ignore_stream_cin();
         cout << endl;
 
-        if(account_type == "teacher" && teachers_cred_vect.size() > 0)
+        if(account_type == ACCOUNT_TYPES::TEACHER && teachers_cred_vect.size() > 0)
         {
             for(int i = 0; i < teachers_cred_vect.size(); i++)
             {
-                if(teachers_cred_vect[i][TABLE_HEADERS::USER_NAME] == user_name && teachers_cred_vect[i][TABLE_HEADERS::PASSWORD] == password)
+                if(teachers_cred_vect[i][TABLE_HEADERS_CRED::USER_NAME] == user_name && teachers_cred_vect[i][TABLE_HEADERS_CRED::PASSWORD] == password)
                 {
                     USER_LOGGED_IN = true;
+                    logged_in_user_info_vec.push_back(teachers_cred_vect[i][TABLE_HEADERS_CRED::FIRST_NAME]);
+                    logged_in_user_info_vec.push_back(teachers_cred_vect[i][TABLE_HEADERS_CRED::LAST_NAME]);
+                    logged_in_user_info_vec.push_back(teachers_cred_vect[i][TABLE_HEADERS_CRED::USER_NAME]);
                     get_danger_color();
                     cout << "User logged in with username ";
                     get_warning_color();
@@ -434,13 +512,16 @@ void sign_in()
                 continue;
             }
         }
-        else if(account_type == "student" && students_cred_vect.size() > 0)
+        else if(account_type == ACCOUNT_TYPES::STUDENT && students_cred_vect.size() > 0)
         {
             for(int i = 0; i < students_cred_vect.size(); i++)
             {
-                if(students_cred_vect[i][TABLE_HEADERS::USER_NAME] == user_name && students_cred_vect[i][TABLE_HEADERS::PASSWORD] == password)
+                if(students_cred_vect[i][TABLE_HEADERS_CRED::USER_NAME] == user_name && students_cred_vect[i][TABLE_HEADERS_CRED::PASSWORD] == password)
                 {
                     USER_LOGGED_IN = true;
+                    logged_in_user_info_vec.push_back(students_cred_vect[i][TABLE_HEADERS_CRED::FIRST_NAME]);
+                    logged_in_user_info_vec.push_back(students_cred_vect[i][TABLE_HEADERS_CRED::LAST_NAME]);
+                    logged_in_user_info_vec.push_back(students_cred_vect[i][TABLE_HEADERS_CRED::USER_NAME]);
                     get_danger_color();
                     cout << "User logged in with username !" << user_name << endl;
                     break;
@@ -460,9 +541,9 @@ void sign_in()
 
         if(USER_LOGGED_IN)
         {
-            if(account_type == "teacher")
+            if(account_type == ACCOUNT_TYPES::TEACHER)
                 teachers_cred_vect.clear();
-            else if(account_type == "student")
+            else if(account_type == ACCOUNT_TYPES::STUDENT)
                 students_cred_vect.clear();
             break;
         }
@@ -541,13 +622,9 @@ void ignore_stream_cin()
 }
 
 
-void show_account_types_menu(string* account_type)
+void show_account_types_menu()
 {
-    enum choices
-    {
-        TEACHER = 1,
-        STUDENT = 2,
-    };
+
 
     int selected_choice;
     get_secondary_color();
@@ -576,11 +653,11 @@ void show_account_types_menu(string* account_type)
 
         switch(selected_choice)
         {
-            case choices::TEACHER:
-                *account_type = "teacher";
+            case ACCOUNT_TYPES::TEACHER:
+                account_type = ACCOUNT_TYPES::TEACHER;
                 break;
-            case choices::STUDENT:
-                *account_type = "student";
+            case ACCOUNT_TYPES::STUDENT:
+                account_type = ACCOUNT_TYPES::STUDENT;
                 break;
             default:
                 get_danger_color();
@@ -588,5 +665,148 @@ void show_account_types_menu(string* account_type)
                 continue;
         }
         break;
+
+    }
+}
+
+void show_teacher_dashboard()
+{
+    system("cls");
+    system("pause");
+}
+
+void show_student_dashboard()
+{
+    system("cls");
+    //defining an enum
+    //to refer the sign up and sign in option
+    enum choices
+    {
+        SHOW_PROFILE = 1,
+        SHOW_TEACHERS,
+        LOG_OUT
+    };
+
+    //int type variable
+    //to store users selected input
+    int selected_choice;
+
+    //function call to change the console text color
+    get_secondary_color();
+
+    //hardcoded to show option on the console screen
+    cout << "|======================|" << endl
+         << "|        Main Menu     |" << endl
+         << "|======================|" << endl
+         << "|   1. Show Profile    |" << endl
+         << "|----------------------|" << endl
+         << "|   2. Show Teachers   |" << endl
+         << "|----------------------|" << endl
+         << "|   3. Logout          |" << endl
+         << "|======================|" << endl << endl;
+
+    //changing the text color
+    get_warning_color();
+    cout << "Select an option from the above. Use any positive integer number corresponding to each item\t";
+
+    cin >> selected_choice;
+
+    switch(selected_choice)
+    {
+        case choices::SHOW_PROFILE:
+            show_profile();
+            break;
+        case choices::LOG_OUT:
+            log_out();
+            break;
+        default:
+            cout << "Input is out of range. Try again\t";
+    }
+}
+
+void show_profile()
+{
+    string file_name;
+
+    if(account_type == ACCOUNT_TYPES::TEACHER)
+        file_name = TEACHER_CRED_FILE_NAME;
+    else if(account_type == ACCOUNT_TYPES::STUDENT)
+        file_name = STUDENT_CRED_FILE_NAME;
+
+    vector<vector<string>> cell_datas = {{"First Name", logged_in_user_info_vec[TABLE_HEADERS_CRED::FIRST_NAME]},
+                                    {"Last Name", logged_in_user_info_vec[TABLE_HEADERS_CRED::LAST_NAME]},
+                                    {"User Name", logged_in_user_info_vec[TABLE_HEADERS_CRED::USER_NAME]}};
+    vector<int> column_widths;
+
+    calculate_width_of_table_columns(cell_datas.size(), cell_datas[0].size(), cell_datas, &column_widths);
+
+
+
+    draw_horizontal_line(column_widths, '=');
+    draw_table_cells(cell_datas.size(), cell_datas[0].size(), cell_datas, column_widths);
+    draw_horizontal_line(column_widths, '=');
+
+
+
+
+    system("pause");
+
+
+}
+
+void log_out()
+{
+    USER_LOGGED_IN = false;
+}
+
+void calculate_width_of_table_columns(int total_rows, int total_columns, vector<vector<string>> datas, vector<int>* column_widths)
+{
+    if(column_widths->size() == 0)
+    {
+        for(int i = 0; i < total_columns; i++)
+            column_widths->push_back(0);
+    }
+    for(int row = 0; row < total_rows; row++)
+    {
+        for(int column = 0; column < total_columns; column++)
+        {
+
+            int length_of_string = datas[row][column].size();
+            if(length_of_string > column_widths->at(column))
+            {
+                column_widths->at(column) = length_of_string+5;
+            }
+        }
+    }
+}
+
+void draw_horizontal_line(vector<int> column_widths, char line_type)
+{
+    for(int i = 0; i < column_widths.size(); i++)
+    {
+        cout << "|";
+        cout << string(column_widths.at(i), line_type);
+        cout << "|";
+    }
+    cout << endl;
+}
+
+void draw_table_cells(int total_rows, int total_columns, vector<vector<string>> datas, vector<int> column_widths)
+{
+    for(int row = 0; row < total_rows; row++)
+    {
+        for(int column = 0; column < total_columns; column++)
+        {
+            string cell_data = datas[row][column];
+            int string_length = cell_data.size();
+            string whitespaces = string((column_widths.at(column) - string_length)/2, ' ');
+            cout << "|";
+            cout << whitespaces << cell_data << whitespaces;
+            cout << ((2*whitespaces.size()+string_length) < column_widths.at(column) ? string(column_widths.at(column) - (2*whitespaces.size()+string_length), ' ') : "");
+            cout << "|";
+        }
+        cout << endl;
+        if(row+1 < total_rows)
+            draw_horizontal_line(column_widths, '-');
     }
 }
