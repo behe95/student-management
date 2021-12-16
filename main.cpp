@@ -20,7 +20,7 @@ enum TABLE_HEADERS_CRED
     LAST_NAME = 1,
     USER_NAME = 2,
     PASSWORD = 3,
-    STUDENT_ENROLL_STATUS = 4,
+    STUDENT_ENROLL_STATUS = 4
 };
 
 enum STUDENT_ENROLL_STATUS
@@ -29,8 +29,21 @@ enum STUDENT_ENROLL_STATUS
     ENROLLED = 1
 };
 
+enum STUDENT_ENROLLED_TABLE_HEADERS
+{
+    STUDENT_USERNAME = 0,
+    TEACHER_USERNAME = 1,
+    MATH,
+    PHYSICS,
+    CHEMISTRY
+};
+
 const string TEACHER_CRED_FILE_NAME = "teacher_credentials.txt";
 const string STUDENT_CRED_FILE_NAME = "student_credentials.txt";
+const string TEMP_FILE = "temp.txt";
+const string ENROLLED_STUDENT_DATA_FILE_NAME = "enrolled.txt";
+
+const string NOT_GRADED = "Not Graded";
 
 //function prototype to show main menu
 //return type void
@@ -71,6 +84,7 @@ void show_student_dashboard();
 
 void show_profile();
 void show_teachers_list();
+void enroll_student(vector<vector<string>> teachers_list);
 void log_out();
 
 void calculate_width_of_table_columns(int total_rows, int total_columns, vector<vector<string>> datas, vector<int>* column_widths);
@@ -760,7 +774,9 @@ void show_profile()
     calculate_width_of_table_columns(cell_datas.size(), cell_datas[0].size(), cell_datas, &column_widths);
 
 
-
+    cout << endl
+             << "********************* Student Info ********************" << endl
+             << endl;
     draw_horizontal_line(column_widths, '=');
     draw_table_cells(cell_datas.size(), cell_datas[0].size(), cell_datas, column_widths);
     draw_horizontal_line(column_widths, '=');
@@ -770,6 +786,71 @@ void show_profile()
              << "********************* You are currently not enrolled to any teacher ********************" << endl
              << "************************ Select a teacher from the Teachers List ***********************" << endl
              << endl;
+    else
+    {
+        vector<vector<string>> student_course_info = {{"Teacher", "Math", "Physics", "Chemistry"}};
+
+        ifstream input_file_student_enrolled_info(ENROLLED_STUDENT_DATA_FILE_NAME);
+        string temp_string = "";
+        vector<string> temp_vect;
+
+        ifstream teachers_cred_file(TEACHER_CRED_FILE_NAME);
+        vector<string> temp_vect_teacher_cred;
+
+        if(input_file_student_enrolled_info)
+        {
+            while(!input_file_student_enrolled_info.eof())
+            {
+                getline(input_file_student_enrolled_info, temp_string);
+                stringstream temp_stream(temp_string);
+
+                while(getline(temp_stream, temp_string, ','))
+                {
+                    temp_vect.push_back(temp_string);
+                }
+                if(temp_vect[STUDENT_ENROLLED_TABLE_HEADERS::STUDENT_USERNAME] == logged_in_user_info_vec[TABLE_HEADERS_CRED::USER_NAME])
+                {
+
+
+                    while(!teachers_cred_file.eof())
+                    {
+                        getline(teachers_cred_file, temp_string);
+                        stringstream temp_stream_teacher(temp_string);
+
+                        while(getline(temp_stream_teacher, temp_string, ','))
+                        {
+                            temp_vect_teacher_cred.push_back(temp_string);
+                        }
+                        if(temp_vect[STUDENT_ENROLLED_TABLE_HEADERS::TEACHER_USERNAME] == temp_vect_teacher_cred[TABLE_HEADERS_CRED::USER_NAME])
+                            break;
+                        else
+                            temp_vect_teacher_cred.clear();
+                    }
+                    temp_vect[STUDENT_ENROLLED_TABLE_HEADERS::TEACHER_USERNAME] = temp_vect_teacher_cred[TABLE_HEADERS_CRED::FIRST_NAME] + " " + temp_vect_teacher_cred[TABLE_HEADERS_CRED::LAST_NAME];
+                    temp_vect.erase(temp_vect.begin() + STUDENT_ENROLLED_TABLE_HEADERS::STUDENT_USERNAME);
+                    student_course_info.push_back(temp_vect);
+                    break;
+                }
+            }
+        }
+        else
+        {
+            cout << "ERROR!!Something went wrong!!" << endl;
+        }
+
+        input_file_student_enrolled_info.close();
+        teachers_cred_file.close();
+
+        vector<int> column_widths_for_student_enroll_info;
+        calculate_width_of_table_columns(student_course_info.size(), student_course_info[0].size(), student_course_info, &column_widths_for_student_enroll_info);
+
+        cout << endl
+             << "********************* Course Info ********************" << endl
+             << endl;
+        draw_horizontal_line(column_widths_for_student_enroll_info, '=');
+        draw_table_cells(student_course_info.size(), student_course_info[0].size(), student_course_info, column_widths_for_student_enroll_info);
+        draw_horizontal_line(column_widths_for_student_enroll_info, '=');
+    }
 
 
 
@@ -781,7 +862,7 @@ void show_profile()
 
 void show_teachers_list()
 {
-    vector<vector<string>> cell_datas = {{"First Name", "Last Name", "User Name"}};
+    vector<vector<string>> cell_datas = {{"Serial Number", "First Name", "Last Name", "User Name"}};
     vector<int> column_widths;
     string file_name = TEACHER_CRED_FILE_NAME;
 
@@ -789,10 +870,14 @@ void show_teachers_list()
 
     if(input_file.good())
     {
+        int index = 0;
         while(!input_file.eof())
             {
+                index++;
                 string temp_data = "";
                 vector<string> temp_vector;
+
+                temp_vector.push_back(to_string(index));
 
                 getline(input_file, temp_data);
                 stringstream temp_stream(temp_data);
@@ -805,12 +890,18 @@ void show_teachers_list()
             }
             input_file.close();
 
-
             calculate_width_of_table_columns(cell_datas.size(), cell_datas[0].size(), cell_datas, &column_widths);
 
             draw_horizontal_line(column_widths, '=');
             draw_table_cells(cell_datas.size(), cell_datas[0].size(), cell_datas, column_widths);
             draw_horizontal_line(column_widths, '=');
+
+            if(logged_in_user_info_vec[TABLE_HEADERS_CRED::STUDENT_ENROLL_STATUS] == to_string(STUDENT_ENROLL_STATUS::NOT_ENROLLED))
+            {
+                enroll_student(cell_datas);
+            }
+
+
 
     }
     else
@@ -824,6 +915,102 @@ void show_teachers_list()
 
     system("pause");
 
+}
+
+void enroll_student(vector<vector<string>> teachers_list)
+{
+    int selected_teacher;
+    vector<vector<string>> student_cred_cell_datas;
+
+    cout << "Select a teacher from the above to enroll. Select any positive non-zero integer number\t";
+    cin >> selected_teacher;
+
+    string temp_file_name = TEMP_FILE;
+    string file_name = STUDENT_CRED_FILE_NAME;
+    ifstream input_file_student_cred(file_name);
+    ofstream output_file_student_cred;
+
+    while(!input_file_student_cred.eof())
+    {
+        string temp_data = "";
+        vector<string> temp_vector;
+
+        getline(input_file_student_cred, temp_data);
+        stringstream temp_stream(temp_data);
+
+        while(getline(temp_stream, temp_data, ','))
+        {
+            temp_vector.push_back(temp_data);
+        }
+        if(temp_vector[TABLE_HEADERS_CRED::USER_NAME] == logged_in_user_info_vec[TABLE_HEADERS_CRED::USER_NAME])
+        {
+            temp_vector[TABLE_HEADERS_CRED::STUDENT_ENROLL_STATUS] = to_string(STUDENT_ENROLL_STATUS::ENROLLED);
+            logged_in_user_info_vec[TABLE_HEADERS_CRED::STUDENT_ENROLL_STATUS] = to_string(STUDENT_ENROLL_STATUS::ENROLLED);
+            student_cred_cell_datas.push_back(temp_vector);
+        }
+        else
+            student_cred_cell_datas.push_back(temp_vector);
+    }
+    input_file_student_cred.close();
+
+    remove(file_name.c_str());
+
+    output_file_student_cred.open(temp_file_name, ios::app);
+
+    for(int row = 0; row < student_cred_cell_datas.size(); row++)
+    {
+        for(int column = 0; column < student_cred_cell_datas[row].size(); column++)
+        {
+            if(column == 0 && row != 0)
+                output_file_student_cred << "\n";
+
+            output_file_student_cred << student_cred_cell_datas[row][column];
+
+            if(column != student_cred_cell_datas[row].size() - 1)
+                output_file_student_cred << ",";
+        }
+    }
+
+    output_file_student_cred.close();
+    rename(temp_file_name.c_str(), file_name.c_str());
+
+    ofstream output_file_enrolled_student;
+    output_file_enrolled_student.open(ENROLLED_STUDENT_DATA_FILE_NAME, ios::app);
+
+    if(!output_file_enrolled_student)
+    {
+        cout << "ERROR: Something went wrong! Could not open the file" << endl;
+    }
+    else
+    {
+        bool data_exists_in_enrolled_students_file = false;
+        string temp_data = "";
+
+        ifstream input_file_enrolled_students(ENROLLED_STUDENT_DATA_FILE_NAME);
+
+        if(input_file_enrolled_students)
+        {
+            getline(input_file_enrolled_students, temp_data);
+            if(temp_data.size() > 0)
+                data_exists_in_enrolled_students_file = true;
+        }
+        input_file_enrolled_students.close();
+
+        if(data_exists_in_enrolled_students_file)
+            output_file_enrolled_student << endl;
+
+        output_file_enrolled_student << logged_in_user_info_vec[TABLE_HEADERS_CRED::USER_NAME] << ",";
+        output_file_enrolled_student << teachers_list[selected_teacher][TABLE_HEADERS_CRED::USER_NAME+1] << ",";
+        output_file_enrolled_student << NOT_GRADED << ",";
+        output_file_enrolled_student << NOT_GRADED << ",";
+        output_file_enrolled_student << NOT_GRADED;
+
+        output_file_enrolled_student.close();
+
+        cout << "Enrolled to " << teachers_list[selected_teacher][TABLE_HEADERS_CRED::FIRST_NAME+1] << " "
+             << teachers_list[selected_teacher][TABLE_HEADERS_CRED::LAST_NAME+1] << "'s class successfully!" << endl;
+
+    }
 }
 
 void log_out()
