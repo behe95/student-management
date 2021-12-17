@@ -83,6 +83,11 @@ void show_teacher_dashboard();
 void show_student_dashboard();
 
 void show_profile();
+void show_students_list();
+void option_selection_for_student_data_modification(vector<vector<string>>* student_list, vector<int>* column_widths);
+void assign_marks(vector<vector<string>>* student_list, vector<int>* column_widths);
+void update_marks(vector<vector<string>>* student_list, vector<int>* column_widths);
+void delete_student(vector<vector<string>>* student_list, vector<int> column_widths);
 void show_teachers_list();
 void enroll_student(vector<vector<string>> teachers_list);
 void log_out();
@@ -702,7 +707,53 @@ void show_account_types_menu()
 void show_teacher_dashboard()
 {
     system("cls");
-    system("pause");
+    //defining an enum
+    //to refer the sign up and sign in option
+    enum choices
+    {
+        SHOW_PROFILE = 1,
+        SHOW_STUDENTS,
+        LOG_OUT
+    };
+
+    //int type variable
+    //to store users selected input
+    int selected_choice;
+
+    //function call to change the console text color
+    get_secondary_color();
+
+    //hardcoded to show option on the console screen
+    cout << "|======================|" << endl
+         << "|        Main Menu     |" << endl
+         << "|======================|" << endl
+         << "|   1. Show Profile    |" << endl
+         << "|----------------------|" << endl
+         << "|   2. Show Students   |" << endl
+         << "|----------------------|" << endl
+         << "|   3. Logout          |" << endl
+         << "|======================|" << endl << endl;
+
+    //changing the text color
+    get_warning_color();
+    cout << "Select an option from the above. Use any positive integer number corresponding to each item\t";
+
+    cin >> selected_choice;
+
+    switch(selected_choice)
+    {
+        case choices::SHOW_PROFILE:
+            show_profile();
+            break;
+        case choices::SHOW_STUDENTS:
+            show_students_list();
+            break;
+        case choices::LOG_OUT:
+            log_out();
+            break;
+        default:
+            cout << "Input is out of range. Try again\t";
+    }
 }
 
 void show_student_dashboard()
@@ -786,7 +837,7 @@ void show_profile()
              << "********************* You are currently not enrolled to any teacher ********************" << endl
              << "************************ Select a teacher from the Teachers List ***********************" << endl
              << endl;
-    else
+    else if(account_type == ACCOUNT_TYPES::STUDENT && stoi(logged_in_user_info_vec[TABLE_HEADERS_CRED::STUDENT_ENROLL_STATUS]) == STUDENT_ENROLL_STATUS::ENROLLED)
     {
         vector<vector<string>> student_course_info = {{"Teacher", "Math", "Physics", "Chemistry"}};
 
@@ -857,6 +908,125 @@ void show_profile()
 
     system("pause");
 
+
+}
+
+void show_students_list()
+{
+    enum STUDENT_LIST_TABLE_HEADRES_INDEX
+    {
+        SERIAL_NUMBER = 0,
+        FIRST_NAME,
+        LAST_NAME,
+        USER_NAME,
+        MATH,
+        PHYSICS,
+        CHEMISTRY
+    };
+    vector<vector<string>> cell_datas = {{"Serial Number", "First Name", "Last Name", "User Name", "Math", "Physics", "Chemistry"}};
+    vector<int> column_widths;
+
+
+    ifstream input_file_enrolled_student(ENROLLED_STUDENT_DATA_FILE_NAME);
+    ifstream input_file_student_creds(STUDENT_CRED_FILE_NAME);
+
+    if(input_file_enrolled_student.good())
+    {
+
+        int index = 0;
+        string temp_data = "";
+        vector<string> temp_vector;
+        vector<vector<string>> students_course_datas_for_current_logged_in_user;
+        vector<vector<string>> students_creds_for_current_logged_in_user;
+
+
+        while(!input_file_enrolled_student.eof())
+        {
+            index++;
+
+            vector<string> temp_vector_for_student_course_data;
+
+            temp_vector.push_back(to_string(index));
+
+            getline(input_file_enrolled_student, temp_data);
+            stringstream temp_stream(temp_data);
+
+            while(getline(temp_stream, temp_data, ','))
+            {
+                temp_vector_for_student_course_data.push_back(temp_data);
+            }
+
+            if(temp_vector_for_student_course_data[STUDENT_ENROLLED_TABLE_HEADERS::TEACHER_USERNAME] == logged_in_user_info_vec[TABLE_HEADERS_CRED::USER_NAME])
+                students_course_datas_for_current_logged_in_user.push_back(temp_vector_for_student_course_data);
+
+        }
+
+
+        if(students_course_datas_for_current_logged_in_user.size() > 0)
+        {
+            while(!input_file_student_creds.eof())
+            {
+                getline(input_file_student_creds, temp_data);
+                stringstream temp_stream_for_student_cred(temp_data);
+                vector<string> temp_vector_for_student_cred;
+
+                while(getline(temp_stream_for_student_cred, temp_data, ','))
+                {
+                    temp_vector_for_student_cred.push_back(temp_data);
+                }
+
+                for(auto course_info:students_course_datas_for_current_logged_in_user)
+                {
+                    if(course_info[STUDENT_ENROLLED_TABLE_HEADERS::STUDENT_USERNAME] == temp_vector_for_student_cred[TABLE_HEADERS_CRED::USER_NAME])
+                    {
+                        for(int i = TABLE_HEADERS_CRED::FIRST_NAME; i <= TABLE_HEADERS_CRED::USER_NAME; i++)
+                            temp_vector.push_back(temp_vector_for_student_cred[i]);
+
+                        for(int i = STUDENT_ENROLLED_TABLE_HEADERS::MATH; i <= STUDENT_ENROLLED_TABLE_HEADERS::CHEMISTRY; i++)
+                            temp_vector.push_back(course_info[i]);
+                    }
+                }
+                cell_datas.push_back(temp_vector);
+            }
+
+
+
+            input_file_enrolled_student.close();
+            input_file_student_creds.close();
+
+            calculate_width_of_table_columns(cell_datas.size(), cell_datas[0].size(), cell_datas, &column_widths);
+
+            draw_horizontal_line(column_widths, '=');
+            draw_table_cells(cell_datas.size(), cell_datas[0].size(), cell_datas, column_widths);
+            draw_horizontal_line(column_widths, '=');
+
+
+
+        }
+        else
+        {
+            cell_datas.clear();
+            cout << endl
+             << "********************* Sorry There is No Students Enrolled For Your Course ********************" << endl
+             << "******************************** Try Again Later When Available ******************************" << endl
+             << endl;
+        }
+
+    }
+    else
+    {
+        cell_datas.clear();
+        cout << endl
+             << "********************* Sorry There is No Students Enrolled For Your Course ********************" << endl
+             << "******************************** Try Again Later When Available ******************************" << endl
+             << endl;
+
+    }
+
+    if(cell_datas.size() > 0)
+        option_selection_for_student_data_modification(&cell_datas, &column_widths);
+
+    system("pause");
 
 }
 
@@ -1013,9 +1183,191 @@ void enroll_student(vector<vector<string>> teachers_list)
     }
 }
 
+void option_selection_for_student_data_modification(vector<vector<string>>* student_list, vector<int>* column_widths)
+{
+    while(true)
+    {
+        system("cls");
+        draw_horizontal_line(*column_widths, '=');
+        draw_table_cells(student_list->size(), student_list->at(0).size(), *student_list, *column_widths);
+        draw_horizontal_line(*column_widths, '=');
+
+        cout << "|============================|" << endl
+             << "|           Option           |" << endl
+             << "|============================|" << endl
+             << "|   1. Assign Marks          |" << endl
+             << "|----------------------------|" << endl
+             << "|   2. Update Marks          |" << endl
+             << "|----------------------------|" << endl
+             << "|   3. Remove Student        |" << endl
+             << "|----------------------------|" << endl
+             << "|   4. Return To Dashboard   |" << endl
+             << "|============================|" << endl << endl;
+
+        cout << "Select any option from the above. Select only non-zero integer within above range!\t";
+
+        int selected_option;
+
+        cin >> selected_option;
+
+        cout << endl;
+        enum SELECT_OPTION
+        {
+            ASSIGN_MARKS = 1,
+            UPDATE_MARKS,
+            REMOVE_STUDENT,
+            RETURN_TO_DASHBOARD
+        };
+
+        switch(selected_option)
+        {
+            case SELECT_OPTION::ASSIGN_MARKS:
+                assign_marks(student_list, column_widths);
+                break;
+            case SELECT_OPTION::UPDATE_MARKS:
+                update_marks(student_list, column_widths);
+                break;
+            case SELECT_OPTION::REMOVE_STUDENT:
+                delete_student(student_list, *column_widths);
+                break;
+            case SELECT_OPTION::RETURN_TO_DASHBOARD:
+                break;
+            default:
+                cout << "Invalid input out of range! Try again" << endl;
+        }
+
+        if(selected_option == SELECT_OPTION::RETURN_TO_DASHBOARD)
+            break;
+    }
+}
+
+void assign_marks(vector<vector<string>>* student_list, vector<int>* column_widths)
+{
+    cout << "Select a student by his/her serial number to assign marks. Select only non-zero integer number.\t";
+
+    int selected_student;
+
+    while(true)
+    {
+        cin >> selected_student;
+        if(cin.rdstate() == 4)
+        {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "You cannot write any symbol or letter! Try again.\t";
+        }
+        else if(selected_student > student_list->size() - 1 || selected_student <= 0)
+        {
+            cout << "Invalid input out of range. Try again\t";
+        }
+        else
+        {
+            cout << endl;
+            break;
+        }
+
+    }
+
+    enum STUDENT_LIST_TABLE_HEADRES_INDEX
+    {
+        SERIAL_NUMBER = 0,
+        FIRST_NAME,
+        LAST_NAME,
+        USER_NAME,
+        MATH,
+        PHYSICS,
+        CHEMISTRY
+    };
+
+    int math_number, physics_number, chemistry_number;
+
+    cout << "Selected Student:\t" << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::FIRST_NAME] << " "
+         << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::LAST_NAME] << endl;
+
+    cout << "Math Marks:\t";
+    cin >> math_number;
+    cout << endl;
+
+    cout << "Physics Narks:\t";
+    cin >> physics_number;
+    cout << endl;
+
+    cout << "Chemistry Marks:\t";
+    cin >> chemistry_number;
+    cout << endl;
+
+    student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::MATH] = to_string(math_number);
+    student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::PHYSICS] = to_string(physics_number);
+    student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::CHEMISTRY] = to_string(chemistry_number);
+
+    vector<vector<string>> modified_student_datas;
+    ifstream input_file(ENROLLED_STUDENT_DATA_FILE_NAME);
+    ofstream output_file(TEMP_FILE, ios::app);
+
+    while(!input_file.eof())
+    {
+        string temp_data = "";
+        vector<string> temp_vector;
+
+        getline(input_file, temp_data);
+        stringstream temp_stream(temp_data);
+
+        while(getline(temp_stream, temp_data, ','))
+        {
+            temp_vector.push_back(temp_data);
+        }
+        if(temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::STUDENT_USERNAME] == student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::USER_NAME])
+        {
+            temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::MATH] = to_string(math_number);
+            temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::PHYSICS] = to_string(physics_number);
+            temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::CHEMISTRY] = to_string(chemistry_number);
+            modified_student_datas.push_back(temp_vector);
+        }
+        else
+            modified_student_datas.push_back(temp_vector);
+    }
+    input_file.close();
+
+    remove(ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
+
+    for(int row = 0; row < modified_student_datas.size(); row++)
+    {
+        for(int column = 0; column < modified_student_datas[row].size(); column++)
+        {
+            if(column == 0 && row != 0)
+                output_file << "\n";
+
+            output_file << modified_student_datas[row][column];
+
+            if(column != modified_student_datas[row].size() - 1)
+                output_file << ",";
+        }
+    }
+
+    output_file.close();
+
+    rename(TEMP_FILE.c_str(), ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
+
+    cout << endl;
+    cout << "Marks assigned to " << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::FIRST_NAME] << " "
+         << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::LAST_NAME] << " successfully!" << endl;
+
+
+
+}
+void update_marks(vector<vector<string>>* student_list, vector<int>* column_widths)
+{
+
+}
+void delete_student(vector<vector<string>>* student_list, vector<int> column_widths)
+{
+
+}
+
 void log_out()
 {
     USER_LOGGED_IN = false;
+    logged_in_user_info_vec.clear();
 }
 
 void calculate_width_of_table_columns(int total_rows, int total_columns, vector<vector<string>> datas, vector<int>* column_widths)
