@@ -1488,7 +1488,8 @@ void option_selection_for_student_data_modification(vector<vector<string>>* stud
 void assign_marks(vector<vector<string>>* student_list, vector<int>* column_widths)
 {
     get_warning_color();
-    cout << "Select a student by his/her serial number to assign marks. Select only non-zero integer number.\t";
+    cout << "Select a student by his/her serial number to assign marks. Select only non-zero integer number." << endl;
+    cout << "Type 0 to return to the dashboard\t";
 
     int selected_student;
 
@@ -1502,7 +1503,7 @@ void assign_marks(vector<vector<string>>* student_list, vector<int>* column_widt
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
             cout << "You cannot write any symbol or letter! Try again.\t";
         }
-        else if(selected_student > student_list->size() - 1 || selected_student <= 0)
+        else if(selected_student > student_list->size() - 1 || selected_student < 0)
         {
             cout << "Invalid input out of range. Try again\t";
         }
@@ -1514,95 +1515,101 @@ void assign_marks(vector<vector<string>>* student_list, vector<int>* column_widt
 
     }
 
-    enum STUDENT_LIST_TABLE_HEADRES_INDEX
-    {
-        SERIAL_NUMBER = 0,
-        FIRST_NAME,
-        LAST_NAME,
-        USER_NAME,
-        MATH,
-        PHYSICS,
-        CHEMISTRY
-    };
+    if(selected_student != 0){
+        enum STUDENT_LIST_TABLE_HEADRES_INDEX
+        {
+            SERIAL_NUMBER = 0,
+            FIRST_NAME,
+            LAST_NAME,
+            USER_NAME,
+            MATH,
+            PHYSICS,
+            CHEMISTRY
+        };
 
-    int math_number, physics_number, chemistry_number;
+        int math_number, physics_number, chemistry_number;
 
-    get_warning_color();
-    cout << "Type any integer number. To input \"Not Graded\" type -1 (Negative One)" << endl;
-    cout << "Selected Student:\t" << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::FIRST_NAME] << " "
-         << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::LAST_NAME] << endl;
+        get_warning_color();
+        cout << "Type any integer number. To input \"Not Graded\" type -1 (Negative One)" << endl;
+        cout << "Selected Student:\t" << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::FIRST_NAME] << " "
+             << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::LAST_NAME] << endl;
 
-    cout << endl;
+        cout << endl;
+
+        get_default_color();
+        cout << "Math Marks:\t";
+        cin >> math_number;
+        cout << endl;
+
+        cout << "Physics Narks:\t";
+        cin >> physics_number;
+        cout << endl;
+
+        cout << "Chemistry Marks:\t";
+        cin >> chemistry_number;
+        cout << endl;
+
+        student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::MATH] = math_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(math_number);
+        student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::PHYSICS] = physics_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(physics_number);
+        student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::CHEMISTRY] = chemistry_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(chemistry_number);
+
+        vector<vector<string>> modified_student_datas;
+        ifstream input_file(ENROLLED_STUDENT_DATA_FILE_NAME);
+        ofstream output_file(TEMP_FILE, ios::app);
+
+        while(!input_file.eof())
+        {
+            string temp_data = "";
+            vector<string> temp_vector;
+
+            getline(input_file, temp_data);
+            stringstream temp_stream(temp_data);
+
+            while(getline(temp_stream, temp_data, ','))
+            {
+                temp_vector.push_back(temp_data);
+            }
+            if(temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::STUDENT_USERNAME] == student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::USER_NAME])
+            {
+                temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::MATH] = math_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(math_number);
+                temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::PHYSICS] = physics_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(physics_number);
+                temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::CHEMISTRY] = chemistry_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(chemistry_number);
+                modified_student_datas.push_back(temp_vector);
+            }
+            else
+                modified_student_datas.push_back(temp_vector);
+        }
+        input_file.close();
+
+        remove(ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
+
+        for(int row = 0; row < modified_student_datas.size(); row++)
+        {
+            for(int column = 0; column < modified_student_datas[row].size(); column++)
+            {
+                if(column == 0 && row != 0)
+                    output_file << "\n";
+
+                output_file << modified_student_datas[row][column];
+
+                if(column != modified_student_datas[row].size() - 1)
+                    output_file << ",";
+            }
+        }
+
+        output_file.close();
+
+        rename(TEMP_FILE.c_str(), ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
+
+        get_success_color();
+        cout << endl;
+        cout << "Marks assigned to " << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::FIRST_NAME] << " "
+             << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::LAST_NAME] << " successfully!" << endl;
+    }
+
 
     get_default_color();
-    cout << "Math Marks:\t";
-    cin >> math_number;
-    cout << endl;
-
-    cout << "Physics Narks:\t";
-    cin >> physics_number;
-    cout << endl;
-
-    cout << "Chemistry Marks:\t";
-    cin >> chemistry_number;
-    cout << endl;
-
-    student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::MATH] = math_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(math_number);
-    student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::PHYSICS] = physics_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(physics_number);
-    student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::CHEMISTRY] = chemistry_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(chemistry_number);
-
-    vector<vector<string>> modified_student_datas;
-    ifstream input_file(ENROLLED_STUDENT_DATA_FILE_NAME);
-    ofstream output_file(TEMP_FILE, ios::app);
-
-    while(!input_file.eof())
-    {
-        string temp_data = "";
-        vector<string> temp_vector;
-
-        getline(input_file, temp_data);
-        stringstream temp_stream(temp_data);
-
-        while(getline(temp_stream, temp_data, ','))
-        {
-            temp_vector.push_back(temp_data);
-        }
-        if(temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::STUDENT_USERNAME] == student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::USER_NAME])
-        {
-            temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::MATH] = math_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(math_number);
-            temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::PHYSICS] = physics_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(physics_number);
-            temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::CHEMISTRY] = chemistry_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(chemistry_number);
-            modified_student_datas.push_back(temp_vector);
-        }
-        else
-            modified_student_datas.push_back(temp_vector);
-    }
-    input_file.close();
-
-    remove(ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
-
-    for(int row = 0; row < modified_student_datas.size(); row++)
-    {
-        for(int column = 0; column < modified_student_datas[row].size(); column++)
-        {
-            if(column == 0 && row != 0)
-                output_file << "\n";
-
-            output_file << modified_student_datas[row][column];
-
-            if(column != modified_student_datas[row].size() - 1)
-                output_file << ",";
-        }
-    }
-
-    output_file.close();
-
-    rename(TEMP_FILE.c_str(), ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
-
-    get_success_color();
-    cout << endl;
-    cout << "Marks assigned to " << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::FIRST_NAME] << " "
-         << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::LAST_NAME] << " successfully!" << endl;
+    system("pause");
 
 
 
@@ -1611,7 +1618,8 @@ void update_marks(vector<vector<string>>* student_list, vector<int>* column_widt
 {
     get_warning_color();
     cout << endl;
-    cout << "Select a student by his/her serial number to update marks. Select only non-zero integer number.\t";
+    cout << "Select a student by his/her serial number to update marks. Select only positive integer number.\n"
+         << "Press 0 to terminate the operation\t";
     int selected_student, selected_option, updated_marks;
 
     while(true)
@@ -1624,7 +1632,7 @@ void update_marks(vector<vector<string>>* student_list, vector<int>* column_widt
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
             cout << "You cannot write any symbol or letter! Try again.\t";
         }
-        else if(selected_student > student_list->size() - 1 || selected_student <= 0)
+        else if(selected_student > student_list->size() - 1 || selected_student < 0)
         {
             cout << "Invalid input out of range. Try again\t";
         }
@@ -1636,140 +1644,153 @@ void update_marks(vector<vector<string>>* student_list, vector<int>* column_widt
 
     }
 
-    enum STUDENT_LIST_TABLE_HEADRES_INDEX
+    if(selected_student != 0)
     {
-        SERIAL_NUMBER = 0,
-        FIRST_NAME,
-        LAST_NAME,
-        USER_NAME,
-        MATH,
-        PHYSICS,
-        CHEMISTRY
-    };
-
-    get_primary_color();
-
-    cout << "|============================|" << endl
-         << "|           Option           |" << endl
-         << "|============================|" << endl
-         << "|        1. Math             |" << endl
-         << "|----------------------------|" << endl
-         << "|        2. Physics          |" << endl
-         << "|----------------------------|" << endl
-         << "|        3. Chemistry        |" << endl
-         << "|============================|" << endl << endl;
-
-    get_warning_color();
-    cout << "Which mark do you want to update?\t" << endl;
-
-
-    while(true)
-    {
-        cin >> selected_option;
-        get_danger_color();
-        if(cin.rdstate() == 4)
+        enum STUDENT_LIST_TABLE_HEADRES_INDEX
         {
-            cin.clear();
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            cout << "You cannot write any symbol or letter! Try again.\t";
+            SERIAL_NUMBER = 0,
+            FIRST_NAME,
+            LAST_NAME,
+            USER_NAME,
+            MATH,
+            PHYSICS,
+            CHEMISTRY
+        };
+
+        get_primary_color();
+
+        cout << "|============================|" << endl
+             << "|           Option           |" << endl
+             << "|============================|" << endl
+             << "|        1. Math             |" << endl
+             << "|----------------------------|" << endl
+             << "|        2. Physics          |" << endl
+             << "|----------------------------|" << endl
+             << "|        3. Chemistry        |" << endl
+             << "|============================|" << endl << endl;
+
+        get_warning_color();
+        cout << "Which mark do you want to update?" << endl;
+        cout << "Type 0 to terminate the operation\t" << endl;
+
+
+        while(true)
+        {
+            cin >> selected_option;
+            get_danger_color();
+            if(cin.rdstate() == 4)
+            {
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                cout << "You cannot write any symbol or letter! Try again.\t";
+            }
+            else if(selected_option > 3 || selected_option < 0)
+            {
+                cout << "Invalid input out of range. Try again\t";
+            }
+            else
+            {
+                cout << endl;
+                break;
+            }
+
         }
-        else if(selected_option > 3 || selected_option <= 0)
+
+        if(selected_option != 0)
         {
-            cout << "Invalid input out of range. Try again\t";
-        }
-        else
-        {
+            get_warning_color();
+            cout << "Type any integer number. To input \"Not Graded\" type -1 (Negative One)" << endl;
+            cout << "Type -2 (Negative two) to terminate the operation" << endl;
+            cout << "Selected Student:\t" << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::FIRST_NAME] << " "
+                 << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::LAST_NAME] << endl;
+
+            int idx_for_student_list;
+
             cout << endl;
-            break;
-        }
+            get_default_color();
+            switch(selected_option)
+            {
+                case 1:
+                    cout << "Math";
+                    selected_option = STUDENT_ENROLLED_TABLE_HEADERS::MATH;
+                    idx_for_student_list = STUDENT_LIST_TABLE_HEADRES_INDEX::MATH;
+                    break;
+                case 2:
+                    cout << "Physics";
+                    selected_option = STUDENT_ENROLLED_TABLE_HEADERS::PHYSICS;
+                    idx_for_student_list = STUDENT_LIST_TABLE_HEADRES_INDEX::PHYSICS;
+                    break;
+                case 3:
+                    cout << "Chemistry";
+                    selected_option = STUDENT_ENROLLED_TABLE_HEADERS::CHEMISTRY;
+                    idx_for_student_list = STUDENT_LIST_TABLE_HEADRES_INDEX::CHEMISTRY;
+                    break;
+            }
 
+            cout << " marks:\t";
+            cin >> updated_marks;
+
+            if(updated_marks != -2)
+            {
+                student_list->at(selected_student)[idx_for_student_list] = updated_marks == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(updated_marks);
+
+                vector<vector<string>> modified_student_datas;
+                ifstream input_file(ENROLLED_STUDENT_DATA_FILE_NAME);
+                ofstream output_file(TEMP_FILE, ios::app);
+
+                while(!input_file.eof())
+                {
+                    string temp_data = "";
+                    vector<string> temp_vector;
+
+                    getline(input_file, temp_data);
+                    stringstream temp_stream(temp_data);
+
+                    while(getline(temp_stream, temp_data, ','))
+                    {
+                        temp_vector.push_back(temp_data);
+                    }
+                    if(temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::STUDENT_USERNAME] == student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::USER_NAME])
+                    {
+                        temp_vector[selected_option] = updated_marks == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(updated_marks);
+                        modified_student_datas.push_back(temp_vector);
+                    }
+                    else
+                        modified_student_datas.push_back(temp_vector);
+                }
+                input_file.close();
+
+
+                remove(ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
+
+
+                for(int row = 0; row < modified_student_datas.size(); row++)
+                {
+                    for(int column = 0; column < modified_student_datas[row].size(); column++)
+                    {
+                        if(column == 0 && row != 0)
+                            output_file << "\n";
+
+                        output_file << modified_student_datas[row][column];
+
+                        if(column != modified_student_datas[row].size() - 1)
+                            output_file << ",";
+                    }
+                }
+
+                output_file.close();
+
+                rename(TEMP_FILE.c_str(), ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
+
+                get_success_color();
+                cout << endl;
+                cout << "Marks updated for " << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::FIRST_NAME] << " "
+                     << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::LAST_NAME] << " successfully!" << endl;
+            }
+        }
     }
 
-    get_warning_color();
-    cout << "Type any integer number. To input \"Not Graded\" type -1 (Negative One)" << endl;
-    cout << "Selected Student:\t" << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::FIRST_NAME] << " "
-         << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::LAST_NAME] << endl;
 
-    int idx_for_student_list;
-
-    cout << endl;
-    get_default_color();
-    switch(selected_option)
-    {
-        case 1:
-            cout << "Math";
-            selected_option = STUDENT_ENROLLED_TABLE_HEADERS::MATH;
-            idx_for_student_list = STUDENT_LIST_TABLE_HEADRES_INDEX::MATH;
-            break;
-        case 2:
-            cout << "Physics";
-            selected_option = STUDENT_ENROLLED_TABLE_HEADERS::PHYSICS;
-            idx_for_student_list = STUDENT_LIST_TABLE_HEADRES_INDEX::PHYSICS;
-            break;
-        case 3:
-            cout << "Chemistry";
-            selected_option = STUDENT_ENROLLED_TABLE_HEADERS::CHEMISTRY;
-            idx_for_student_list = STUDENT_LIST_TABLE_HEADRES_INDEX::CHEMISTRY;
-            break;
-    }
-
-    cout << " marks:\t";
-    cin >> updated_marks;
-
-    student_list->at(selected_student)[idx_for_student_list] = updated_marks == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(updated_marks);
-
-    vector<vector<string>> modified_student_datas;
-    ifstream input_file(ENROLLED_STUDENT_DATA_FILE_NAME);
-    ofstream output_file(TEMP_FILE, ios::app);
-
-    while(!input_file.eof())
-    {
-        string temp_data = "";
-        vector<string> temp_vector;
-
-        getline(input_file, temp_data);
-        stringstream temp_stream(temp_data);
-
-        while(getline(temp_stream, temp_data, ','))
-        {
-            temp_vector.push_back(temp_data);
-        }
-        if(temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::STUDENT_USERNAME] == student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::USER_NAME])
-        {
-            temp_vector[selected_option] = updated_marks == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(updated_marks);
-            modified_student_datas.push_back(temp_vector);
-        }
-        else
-            modified_student_datas.push_back(temp_vector);
-    }
-    input_file.close();
-
-
-    remove(ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
-
-
-    for(int row = 0; row < modified_student_datas.size(); row++)
-    {
-        for(int column = 0; column < modified_student_datas[row].size(); column++)
-        {
-            if(column == 0 && row != 0)
-                output_file << "\n";
-
-            output_file << modified_student_datas[row][column];
-
-            if(column != modified_student_datas[row].size() - 1)
-                output_file << ",";
-        }
-    }
-
-    output_file.close();
-
-    rename(TEMP_FILE.c_str(), ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
-
-    get_success_color();
-    cout << endl;
-    cout << "Marks assigned to " << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::FIRST_NAME] << " "
-         << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::LAST_NAME] << " successfully!" << endl;
 
     get_default_color();
     system("pause");
@@ -1779,7 +1800,8 @@ void update_marks(vector<vector<string>>* student_list, vector<int>* column_widt
 void delete_student(vector<vector<string>>* student_list, vector<int> column_widths)
 {
     get_warning_color();
-    cout << "Select a student by his/her serial number to delete from the record. Select only non-zero integer number.\t";
+    cout << "Select a student by his/her serial number to delete from the record. Select only positive integer number.\n"
+         << "To cancel the operation press 0.\t";
 
     int selected_student;
 
@@ -1804,7 +1826,7 @@ void delete_student(vector<vector<string>>* student_list, vector<int> column_wid
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
             cout << "You cannot write any symbol or letter! Try again.\t";
         }
-        else if(selected_student > student_list->size() - 1 || selected_student <= 0)
+        else if(selected_student > student_list->size() - 1 || selected_student < 0)
         {
             cout << "Invalid input out of range. Try again\t";
         }
@@ -1820,104 +1842,107 @@ void delete_student(vector<vector<string>>* student_list, vector<int> column_wid
 
 
 
-    vector<vector<string>> modified_student_datas;
-    ifstream input_file_for_enrolled_data(ENROLLED_STUDENT_DATA_FILE_NAME);
-    ofstream output_file_for_enrolled_data(TEMP_FILE, ios::app);
-
-    while(!input_file_for_enrolled_data.eof())
+    if(selected_student != 0)
     {
-        string temp_data = "";
-        vector<string> temp_vector;
+        vector<vector<string>> modified_student_datas;
+        ifstream input_file_for_enrolled_data(ENROLLED_STUDENT_DATA_FILE_NAME);
+        ofstream output_file_for_enrolled_data(TEMP_FILE, ios::app);
 
-        getline(input_file_for_enrolled_data, temp_data);
-        stringstream temp_stream(temp_data);
-
-        while(getline(temp_stream, temp_data, ','))
+        while(!input_file_for_enrolled_data.eof())
         {
-            temp_vector.push_back(temp_data);
+            string temp_data = "";
+            vector<string> temp_vector;
+
+            getline(input_file_for_enrolled_data, temp_data);
+            stringstream temp_stream(temp_data);
+
+            while(getline(temp_stream, temp_data, ','))
+            {
+                temp_vector.push_back(temp_data);
+            }
+            if(temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::STUDENT_USERNAME] != student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::USER_NAME])
+                modified_student_datas.push_back(temp_vector);
         }
-        if(temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::STUDENT_USERNAME] != student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::USER_NAME])
-            modified_student_datas.push_back(temp_vector);
+        input_file_for_enrolled_data.close();
+
+        remove(ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
+
+        for(int row = 0; row < modified_student_datas.size(); row++)
+        {
+            for(int column = 0; column < modified_student_datas[row].size(); column++)
+            {
+                if(column == 0 && row != 0)
+                    output_file_for_enrolled_data << "\n";
+
+                output_file_for_enrolled_data << modified_student_datas[row][column];
+
+                if(column != modified_student_datas[row].size() - 1)
+                    output_file_for_enrolled_data << ",";
+            }
+        }
+
+        output_file_for_enrolled_data.close();
+
+        rename(TEMP_FILE.c_str(), ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
+
+        vector<vector<string>> modified_student_creds;
+        ifstream input_file_for_student_creds(STUDENT_CRED_FILE_NAME);
+        ofstream output_file_for_student_creds(TEMP_FILE, ios::app);
+
+        while(!input_file_for_student_creds.eof())
+        {
+            string temp_data = "";
+            vector<string> temp_vector;
+
+            getline(input_file_for_student_creds, temp_data);
+            stringstream temp_stream(temp_data);
+
+            while(getline(temp_stream, temp_data, ','))
+            {
+                temp_vector.push_back(temp_data);
+            }
+            if(temp_vector[TABLE_HEADERS_CRED::USER_NAME] == student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::USER_NAME])
+            {
+                temp_vector[TABLE_HEADERS_CRED::STUDENT_ENROLL_STATUS] = to_string(STUDENT_ENROLL_STATUS::NOT_ENROLLED);
+                modified_student_creds.push_back(temp_vector);
+            }
+            else
+                modified_student_creds.push_back(temp_vector);
+        }
+        input_file_for_student_creds.close();
+
+        remove(STUDENT_CRED_FILE_NAME.c_str());
+
+        for(int row = 0; row < modified_student_creds.size(); row++)
+        {
+            for(int column = 0; column < modified_student_creds[row].size(); column++)
+            {
+                if(column == 0 && row != 0)
+                    output_file_for_student_creds << "\n";
+
+                output_file_for_student_creds << modified_student_creds[row][column];
+
+                if(column != modified_student_creds[row].size() - 1)
+                    output_file_for_student_creds << ",";
+            }
+        }
+
+        output_file_for_student_creds.close();
+
+        rename(TEMP_FILE.c_str(), STUDENT_CRED_FILE_NAME.c_str());
+
+        get_success_color();
+        cout << endl;
+        cout << "Enrollment records of " << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::FIRST_NAME] << " "
+             << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::LAST_NAME]
+             << " has been deleted successfully!" << endl;
+
+        student_list->erase(student_list->begin() + selected_student);
+
+
+        for(int i = 1; i < student_list->size(); i++)
+            student_list->at(i)[STUDENT_LIST_TABLE_HEADRES_INDEX::SERIAL_NUMBER] = to_string(i);
     }
-    input_file_for_enrolled_data.close();
-
-    remove(ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
-
-    for(int row = 0; row < modified_student_datas.size(); row++)
-    {
-        for(int column = 0; column < modified_student_datas[row].size(); column++)
-        {
-            if(column == 0 && row != 0)
-                output_file_for_enrolled_data << "\n";
-
-            output_file_for_enrolled_data << modified_student_datas[row][column];
-
-            if(column != modified_student_datas[row].size() - 1)
-                output_file_for_enrolled_data << ",";
-        }
-    }
-
-    output_file_for_enrolled_data.close();
-
-    rename(TEMP_FILE.c_str(), ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
-
-    vector<vector<string>> modified_student_creds;
-    ifstream input_file_for_student_creds(STUDENT_CRED_FILE_NAME);
-    ofstream output_file_for_student_creds(TEMP_FILE, ios::app);
-
-    while(!input_file_for_student_creds.eof())
-    {
-        string temp_data = "";
-        vector<string> temp_vector;
-
-        getline(input_file_for_student_creds, temp_data);
-        stringstream temp_stream(temp_data);
-
-        while(getline(temp_stream, temp_data, ','))
-        {
-            temp_vector.push_back(temp_data);
-        }
-        if(temp_vector[TABLE_HEADERS_CRED::USER_NAME] == student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::USER_NAME])
-        {
-            temp_vector[TABLE_HEADERS_CRED::STUDENT_ENROLL_STATUS] = to_string(STUDENT_ENROLL_STATUS::NOT_ENROLLED);
-            modified_student_creds.push_back(temp_vector);
-        }
-        else
-            modified_student_creds.push_back(temp_vector);
-    }
-    input_file_for_student_creds.close();
-
-    remove(STUDENT_CRED_FILE_NAME.c_str());
-
-    for(int row = 0; row < modified_student_creds.size(); row++)
-    {
-        for(int column = 0; column < modified_student_creds[row].size(); column++)
-        {
-            if(column == 0 && row != 0)
-                output_file_for_student_creds << "\n";
-
-            output_file_for_student_creds << modified_student_creds[row][column];
-
-            if(column != modified_student_creds[row].size() - 1)
-                output_file_for_student_creds << ",";
-        }
-    }
-
-    output_file_for_student_creds.close();
-
-    rename(TEMP_FILE.c_str(), STUDENT_CRED_FILE_NAME.c_str());
-
-    get_success_color();
-    cout << endl;
-    cout << "Enrollment records of " << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::FIRST_NAME] << " "
-         << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::LAST_NAME]
-         << " has been deleted successfully!" << endl;
-
-    student_list->erase(student_list->begin() + selected_student);
-
-
-    for(int i = 1; i < student_list->size(); i++)
-        student_list->at(i)[STUDENT_LIST_TABLE_HEADRES_INDEX::SERIAL_NUMBER] = to_string(i);
 
     get_warning_color();
     system("pause");
