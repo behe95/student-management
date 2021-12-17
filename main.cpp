@@ -1517,7 +1517,141 @@ void update_marks(vector<vector<string>>* student_list, vector<int>* column_widt
 }
 void delete_student(vector<vector<string>>* student_list, vector<int> column_widths)
 {
+    cout << "Select a student by his/her serial number to delete from the record. Select only non-zero integer number.\t";
 
+    int selected_student;
+
+    enum STUDENT_LIST_TABLE_HEADRES_INDEX
+    {
+        SERIAL_NUMBER = 0,
+        FIRST_NAME,
+        LAST_NAME,
+        USER_NAME,
+        MATH,
+        PHYSICS,
+        CHEMISTRY
+    };
+
+    while(true)
+    {
+        cin >> selected_student;
+        if(cin.rdstate() == 4)
+        {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "You cannot write any symbol or letter! Try again.\t";
+        }
+        else if(selected_student > student_list->size() - 1 || selected_student <= 0)
+        {
+            cout << "Invalid input out of range. Try again\t";
+        }
+        else
+        {
+            cout << endl;
+            break;
+        }
+
+    }
+
+
+
+
+
+    vector<vector<string>> modified_student_datas;
+    ifstream input_file_for_enrolled_data(ENROLLED_STUDENT_DATA_FILE_NAME);
+    ofstream output_file_for_enrolled_data(TEMP_FILE, ios::app);
+
+    while(!input_file_for_enrolled_data.eof())
+    {
+        string temp_data = "";
+        vector<string> temp_vector;
+
+        getline(input_file_for_enrolled_data, temp_data);
+        stringstream temp_stream(temp_data);
+
+        while(getline(temp_stream, temp_data, ','))
+        {
+            temp_vector.push_back(temp_data);
+        }
+        if(temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::STUDENT_USERNAME] != student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::USER_NAME])
+            modified_student_datas.push_back(temp_vector);
+    }
+    input_file_for_enrolled_data.close();
+
+    remove(ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
+
+    for(int row = 0; row < modified_student_datas.size(); row++)
+    {
+        for(int column = 0; column < modified_student_datas[row].size(); column++)
+        {
+            if(column == 0 && row != 0)
+                output_file_for_enrolled_data << "\n";
+
+            output_file_for_enrolled_data << modified_student_datas[row][column];
+
+            if(column != modified_student_datas[row].size() - 1)
+                output_file_for_enrolled_data << ",";
+        }
+    }
+
+    output_file_for_enrolled_data.close();
+
+    rename(TEMP_FILE.c_str(), ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
+
+    vector<vector<string>> modified_student_creds;
+    ifstream input_file_for_student_creds(STUDENT_CRED_FILE_NAME);
+    ofstream output_file_for_student_creds(TEMP_FILE, ios::app);
+
+    while(!input_file_for_student_creds.eof())
+    {
+        string temp_data = "";
+        vector<string> temp_vector;
+
+        getline(input_file_for_student_creds, temp_data);
+        stringstream temp_stream(temp_data);
+
+        while(getline(temp_stream, temp_data, ','))
+        {
+            temp_vector.push_back(temp_data);
+        }
+        if(temp_vector[TABLE_HEADERS_CRED::USER_NAME] == student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::USER_NAME])
+        {
+            temp_vector[TABLE_HEADERS_CRED::STUDENT_ENROLL_STATUS] = to_string(STUDENT_ENROLL_STATUS::NOT_ENROLLED);
+            modified_student_creds.push_back(temp_vector);
+        }
+        else
+            modified_student_creds.push_back(temp_vector);
+    }
+    input_file_for_student_creds.close();
+
+    remove(STUDENT_CRED_FILE_NAME.c_str());
+
+    for(int row = 0; row < modified_student_creds.size(); row++)
+    {
+        for(int column = 0; column < modified_student_creds[row].size(); column++)
+        {
+            if(column == 0 && row != 0)
+                output_file_for_student_creds << "\n";
+
+            output_file_for_student_creds << modified_student_creds[row][column];
+
+            if(column != modified_student_creds[row].size() - 1)
+                output_file_for_student_creds << ",";
+        }
+    }
+
+    output_file_for_student_creds.close();
+
+    rename(TEMP_FILE.c_str(), STUDENT_CRED_FILE_NAME.c_str());
+
+    cout << endl;
+    cout << "Enrollment records of " << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::FIRST_NAME] << " "
+         << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::LAST_NAME]
+         << " has been deleted successfully!" << endl;
+
+    student_list->erase(student_list->begin() + selected_student);
+
+    system("pause");
 }
 
 void log_out()
