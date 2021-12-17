@@ -1915,6 +1915,10 @@ void delete_student(vector<vector<string>>* student_list, vector<int> column_wid
 
     student_list->erase(student_list->begin() + selected_student);
 
+
+    for(int i = 1; i < student_list->size(); i++)
+        student_list->at(i)[STUDENT_LIST_TABLE_HEADRES_INDEX::SERIAL_NUMBER] = to_string(i);
+
     get_warning_color();
     system("pause");
 }
