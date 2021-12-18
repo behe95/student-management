@@ -2086,6 +2086,7 @@ void update_marks(vector<vector<string>>* student_list, vector<int>* column_widt
 
             if(updated_marks != -2)
             {
+                //modifying the selected student's marks which will effect the console table that shows enrolled students
                 student_list->at(selected_student)[idx_for_student_list] = updated_marks == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(updated_marks);
 
                 //2d string data type vector to store all the enrolled students list with the modified student
@@ -2114,12 +2115,28 @@ void update_marks(vector<vector<string>>* student_list, vector<int>* column_widt
                     //we are getting each line from the enrolled students' data input file stream separated by newline delimeter
                     //and storing the individual line in a temp_data for a sudden period
                     getline(input_file, temp_data);
+
+                    //converting the temp_data variable's string into stringstream
+                    //so that we can apply the getline() function on the temp_data again
+                    //we will apply the getline function again to separate each comma delimetered strings which are being contained by
+                    //the temp_data
                     stringstream temp_stream(temp_data);
 
+                    //the following while loop will run until there is no comma delimeter
+                    //and it will separate each string by comma delimeter
+                    //and will store it to the temp_data variable
+                    //then the inside of the body of the while loop will run the statement
+                    //which is going to store each separated data inside the temp_vector vector
                     while(getline(temp_stream, temp_data, ','))
                     {
                         temp_vector.push_back(temp_data);
                     }
+
+                    //the following function will check if the temp vector's user name is similar to the
+                    //students list's selected student's username
+                    //if it is true then the temp vectors course info will be chenged
+                    //then we will push the temp vector inside the modified vector
+                    //if it is not true then the data will unchanged as it was
                     if(temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::STUDENT_USERNAME] == student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::USER_NAME])
                     {
                         temp_vector[selected_option] = updated_marks == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(updated_marks);
@@ -2128,12 +2145,17 @@ void update_marks(vector<vector<string>>* student_list, vector<int>* column_widt
                     else
                         modified_student_datas.push_back(temp_vector);
                 }
+
+                //closing the input file stream
                 input_file.close();
 
 
+                //removing the enrolled student data file from the storage
                 remove(ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
 
 
+                //this for loop will go through the 2d string data type vector which we modified earlier
+                //then it will store the data into the temp output file
                 for(int row = 0; row < modified_student_datas.size(); row++)
                 {
                     for(int column = 0; column < modified_student_datas[row].size(); column++)
@@ -2148,8 +2170,10 @@ void update_marks(vector<vector<string>>* student_list, vector<int>* column_widt
                     }
                 }
 
+                //closing the temp output file stream
                 output_file.close();
 
+                //renaming the temp file with our previously deleted file name
                 rename(TEMP_FILE.c_str(), ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
 
                 get_success_color();
@@ -2173,8 +2197,10 @@ void delete_student(vector<vector<string>>* student_list, vector<int> column_wid
     cout << "Select a student by his/her serial number to delete from the record. Select only positive integer number.\n"
          << "To cancel the operation press 0.\t";
 
+    //int data type variable to store the student's serial number
     int selected_student;
 
+    //enum data type to refer to the students list tables headers
     enum STUDENT_LIST_TABLE_HEADRES_INDEX
     {
         SERIAL_NUMBER = 0,
@@ -2186,6 +2212,8 @@ void delete_student(vector<vector<string>>* student_list, vector<int> column_wid
         CHEMISTRY
     };
 
+    //this infinite while loop will loop execute
+    //until it gets valid input
     while(true)
     {
         cin >> selected_student;
@@ -2214,29 +2242,64 @@ void delete_student(vector<vector<string>>* student_list, vector<int> column_wid
 
     if(selected_student != 0)
     {
+        //2d string data type vector to store all the enrolled students list with the modified student
         vector<vector<string>> modified_student_datas;
+
+        //input file stream for enrolled students data
         ifstream input_file_for_enrolled_data(ENROLLED_STUDENT_DATA_FILE_NAME);
+
+        //output file stream for temp file
         ofstream output_file_for_enrolled_data(TEMP_FILE, ios::app);
 
+        //this outer while will be executed until
+        //the input file stream for enrolled students data reach to the end of the file
         while(!input_file_for_enrolled_data.eof())
         {
+            //string type temp variable
+            //this variable will contain each line from the input file stream for a sudden period
+            //the datas will be for enrolled students info
             string temp_data = "";
+
+            //string type vector
+            //this temp vector will contain each data separated by comma delimeter which we will get from the temp_string
             vector<string> temp_vector;
 
+            //we are getting each line from the enrolled students' data input file stream separated by newline delimeter
+            //and storing the individual line in a temp_data for a sudden period
             getline(input_file_for_enrolled_data, temp_data);
+
+            //converting the temp_data variable's string into stringstream
+            //so that we can apply the getline() function on the temp_data again
+            //we will apply the getline function again to separate each comma delimetered strings which are being contained by
+            //the temp_data
             stringstream temp_stream(temp_data);
 
+            //the following while loop will run until there is no comma delimeter
+            //and it will separate each string by comma delimeter
+            //and will store it to the temp_data variable
+            //then the inside of the body of the while loop will run the statement
+            //which is going to store each separated data inside the temp_vector vector
             while(getline(temp_stream, temp_data, ','))
             {
                 temp_vector.push_back(temp_data);
             }
+
+            //the following function will check if the temp vector's user name is not similar to the
+            //students list's selected student's username
+            //if it is true then the the modified vector will store every temp vector except
+            //the one is similar with the username because the data is already deleted
             if(temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::STUDENT_USERNAME] != student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::USER_NAME])
                 modified_student_datas.push_back(temp_vector);
         }
+
+        //closing the input file stream
         input_file_for_enrolled_data.close();
 
+        //removing the enrolled student data file from the storage
         remove(ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
 
+        //this for loop will go through the 2d string data type vector which we modified earlier
+        //then it will store the data into the temp output file
         for(int row = 0; row < modified_student_datas.size(); row++)
         {
             for(int column = 0; column < modified_student_datas[row].size(); column++)
@@ -2251,26 +2314,63 @@ void delete_student(vector<vector<string>>* student_list, vector<int> column_wid
             }
         }
 
+        //closing the temp output file stream
         output_file_for_enrolled_data.close();
 
+        //renaming the temp file with our previously deleted file name
         rename(TEMP_FILE.c_str(), ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
 
+        //now all the following statement is going to change the
+        //deleted student's enrollement status inside the student credentials file
+
+        //2d string data type vector to store all the students credentials Data with the modified student cred data
         vector<vector<string>> modified_student_creds;
+
+        //input file stream for students credentials data
         ifstream input_file_for_student_creds(STUDENT_CRED_FILE_NAME);
+
+        //output file stream for temp file
         ofstream output_file_for_student_creds(TEMP_FILE, ios::app);
 
+        //this outer while will be executed until
+        //the input file stream for students credentials data reach to the end of the file
         while(!input_file_for_student_creds.eof())
         {
+            //string type temp variable
+            //this variable will contain each line from the input file stream for a sudden period
+            //the datas will be for students credentials info
             string temp_data = "";
+
+            //string type vector
+            //this temp vector will contain each data separated by comma delimeter which we will get from the temp_string
             vector<string> temp_vector;
 
+            //we are getting each line from the students' credentials data input file stream separated by newline delimeter
+            //and storing the individual line in a temp_data for a sudden period
             getline(input_file_for_student_creds, temp_data);
+
+            //converting the temp_data variable's string into stringstream
+            //so that we can apply the getline() function on the temp_data again
+            //we will apply the getline function again to separate each comma delimetered strings which are being contained by
+            //the temp_data
             stringstream temp_stream(temp_data);
 
+            //the following while loop will run until there is no comma delimeter
+            //and it will separate each string by comma delimeter
+            //and will store it to the temp_data variable
+            //then the inside of the body of the while loop will run the statement
+            //which is going to store each separated data inside the temp_vector vector
             while(getline(temp_stream, temp_data, ','))
             {
                 temp_vector.push_back(temp_data);
             }
+
+            //the following function will check if the temp vector's user name is not similar to the
+            //students list's selected student's username
+            //if it is true then the the temp vectors selected index student's enrollment status will changed
+            //because that specific student has been disenrolled
+            //the temp vector will be pushed to the modified_student_creds
+            //other the temp vector will be push to the modified student_creds vector without any modification
             if(temp_vector[TABLE_HEADERS_CRED::USER_NAME] == student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::USER_NAME])
             {
                 temp_vector[TABLE_HEADERS_CRED::STUDENT_ENROLL_STATUS] = to_string(STUDENT_ENROLL_STATUS::NOT_ENROLLED);
@@ -2279,10 +2379,15 @@ void delete_student(vector<vector<string>>* student_list, vector<int> column_wid
             else
                 modified_student_creds.push_back(temp_vector);
         }
+
+        //closing the input file stream
         input_file_for_student_creds.close();
 
+        //removing the students credentials data file from the storage
         remove(STUDENT_CRED_FILE_NAME.c_str());
 
+        //this for loop will go through the 2d string data type vector which we modified earlier
+        //then it will store the data into the temp output file
         for(int row = 0; row < modified_student_creds.size(); row++)
         {
             for(int column = 0; column < modified_student_creds[row].size(); column++)
@@ -2297,8 +2402,10 @@ void delete_student(vector<vector<string>>* student_list, vector<int> column_wid
             }
         }
 
+        //closing the output temp file stream
         output_file_for_student_creds.close();
 
+        //renaming the temp file with our previously deleted file name
         rename(TEMP_FILE.c_str(), STUDENT_CRED_FILE_NAME.c_str());
 
         get_success_color();
@@ -2307,9 +2414,12 @@ void delete_student(vector<vector<string>>* student_list, vector<int> column_wid
              << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::LAST_NAME]
              << " has been deleted successfully!" << endl;
 
+        //erasing the deleted selected student from our table or list
         student_list->erase(student_list->begin() + selected_student);
 
 
+        //re-iterating through the student list so that it can show the
+        //student serial number correctly
         for(int i = 1; i < student_list->size(); i++)
             student_list->at(i)[STUDENT_LIST_TABLE_HEADRES_INDEX::SERIAL_NUMBER] = to_string(i);
     }
@@ -2318,19 +2428,34 @@ void delete_student(vector<vector<string>>* student_list, vector<int> column_wid
     system("pause");
 }
 
+//function body for logging out user
+//re assigning the boolean variable
+//also clearing the vector with the logged in user info
+//other wise it will remain in the vector even after any new user
+//log in to his/her account
 void log_out()
 {
     USER_LOGGED_IN = false;
     logged_in_user_info_vec.clear();
 }
 
+//function body for calculating column widths of the table
 void calculate_width_of_table_columns(int total_rows, int total_columns, vector<vector<string>> datas, vector<int>* column_widths)
 {
+    //this condition checks if the column width vector size is zero
+    //if it is true
+    //then the for loop will assign 0
+    //the for loop iterate as per the total number of the columns of the table
     if(column_widths->size() == 0)
     {
         for(int i = 0; i < total_columns; i++)
             column_widths->push_back(0);
     }
+
+    //this for loop condition goes through the 2d string data type vector which is named "datas"
+    //for each rows each column'n string size will be calculated
+    //based on the calculation it will select the highest number for that particular column
+    //and then it will assign that value inside the column_widths vector
     for(int row = 0; row < total_rows; row++)
     {
         for(int column = 0; column < total_columns; column++)
@@ -2339,14 +2464,18 @@ void calculate_width_of_table_columns(int total_rows, int total_columns, vector<
             int length_of_string = datas[row][column].size();
             if(length_of_string > column_widths->at(column))
             {
+                //the following statements +5 is added so that we can get little space with every string
                 column_widths->at(column) = length_of_string+5;
             }
         }
     }
 }
 
+//function body to draw horizontal line
 void draw_horizontal_line(vector<int> column_widths, char line_type)
 {
+    //the following for loop will get the number of total columns to draw over the line
+    //then it will draw the line_type character number of time of each columns size
     for(int i = 0; i < column_widths.size(); i++)
     {
         cout << "|";
@@ -2356,21 +2485,57 @@ void draw_horizontal_line(vector<int> column_widths, char line_type)
     cout << endl;
 }
 
+
+//function body to show table cells data
 void draw_table_cells(int total_rows, int total_columns, vector<vector<string>> datas, vector<int> column_widths)
 {
+    //this for loop condition goes through the 2d string data type vector which is named "datas"
+
     for(int row = 0; row < total_rows; row++)
     {
         for(int column = 0; column < total_columns; column++)
         {
             string cell_data = datas[row][column];
+
+            //this following statement will calculate the actual size of the string without any extra spacing
+            //such as spacing we added +5 earlier when we calculated column widths
             int string_length = cell_data.size();
+
+            //this is going to be our white space
+            //this whitespace will be used on both side of the string data so that it may seem like
+            //that the string is actually centered inside the column
+            //the following calculation's whitespace size = column width / 2
             string whitespaces = string((column_widths.at(column) - string_length)/2, ' ');
+
+            //it will put necessary characters on left side of the string
             cout << "|";
+
+            //outputting string with whitespace on both side
             cout << whitespaces << cell_data << whitespaces;
+
+            //the following statement is to put extra whitespace if necessary
+            //sometime the size of the previously calculated column widths or the actual string size may be both odd number or event number or any one of them
+            //which may disrupt the formatting
+            //because when we are dividing the length by 2 in our earlier calculation we are actually
+            //ignoring the floating values and only considering the decimal numbers
+            //so there may be some incidents where 1 or 2 space may be missed
+            //that's why the following statement calculates if the [left whitespace size + string size + right whitespace] = column width of that particular string
+            //if the above condition is true then there is no problem with spacing
+            //if the sum of the [left whitespace size + string size + right whitespace] is less column width of that particular string
+            //then it means that we are missing  (column width of that particular string - [left whitespace size + string size + right whitespace]) number of
+            //space from our columns
+            //so we will calculate the difference
+            //and will put that number of spacing right side of the string as an extra spacing
             cout << ((2*whitespaces.size()+string_length) < column_widths.at(column) ? string(column_widths.at(column) - (2*whitespaces.size()+string_length), ' ') : "");
+
+            //it will put necessary characters on right side of the string
             cout << "|";
         }
         cout << endl;
+
+        //if the current row is not the last row
+        //then the following statement will draw the horizontal line right after
+        //showing each row
         if(row+1 < total_rows)
             draw_horizontal_line(column_widths, '-');
     }
