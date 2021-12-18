@@ -12,8 +12,9 @@ using namespace std;
 //this will be used in sign_in() or sign_up function or any places where it is required
 enum ACCOUNT_TYPES
 {
-    TEACHER = 1,
-    STUDENT = 2
+    RETURN_TO_MAIN_SCREEN = 0,
+    TEACHER,
+    STUDENT
 };
 
 //enum data type to refer credential file
@@ -91,6 +92,13 @@ void sign_up();
 //parameter none
 void sign_in();
 
+//function prototype to validate if the input for the sign up contains any comma
+//because if we store any comma in our file then it will conflict with the comma delimeters
+//in future. So this function will avoid any comma input.
+//number of parameter is 1
+//parameter is passed by referenece
+void input_validation_for_checking_comma(string* input);
+
 //function prototype for removing extra data from the stream
 //return type void
 //arguments none
@@ -151,6 +159,11 @@ void assign_marks(vector<vector<string>>* student_list, vector<int>* column_widt
 //passed by reference because when we update marks to column the string value of that specific row's specific column width gets changed because
 //of the newly assigned strings width(updated marks width). As we
 void update_marks(vector<vector<string>>* student_list, vector<int>* column_widths);
+
+//function prototype to validate if the input for mark is integer only
+//number of parameter is 1
+//parameter is passed by referenece
+void input_marks_validation_for_int_only(int* mark_input);
 
 //function prototype to delete any specific student from the records
 //this function is for teacher dashboard
@@ -356,6 +369,39 @@ void show_main_menu_screen()
 
 }
 
+void input_validation_for_checking_comma(string* input)
+{
+    bool invalid_input = false;
+    //this infinite while loop will loop execute
+    //until it gets valid input
+    while(true)
+    {
+        cin >> *input;
+        ignore_stream_cin();
+
+        for(int i = 0; i < (*input).size(); i++)
+        {
+            if((*input)[i] == ',')
+            {
+                get_danger_color();
+                cout << "Input cannot contain any comma(s) Try again\t";
+                invalid_input = true;
+                break;
+            }
+        }
+
+        get_warning_color();
+        if(invalid_input)
+        {
+            invalid_input = false;
+            continue;
+        }
+        else
+            break;
+
+    }
+}
+
 //function to execute sign up operation
 void sign_up()
 {
@@ -370,224 +416,257 @@ void sign_up()
     //validate the user input
     show_account_types_menu();
 
-    //clearing console screen
-    system("cls");
-
-    get_secondary_color();
-    cout << "|================================================|" << endl
-         << "|                 Input Rules                    |" << endl
-         << "|================================================|" << endl
-         << "|    o First Name Cannot Contain Any Space       |" << endl
-         << "|------------------------------------------------|" << endl
-         << "|    o Last Name Cannot Contain Any Space        |" << endl
-         << "|------------------------------------------------|" << endl
-         << "|    o User Name Cannot Contain Any Space        |" << endl
-         << "|------------------------------------------------|" << endl
-         << "|    o Password Cannot Contain Any Space         |" << endl
-         << "|------------------------------------------------|" << endl
-         << "|    x Any extra spaces will be removed          |" << endl
-         << "|------------------------------------------------|" << endl
-         << "|    x Anything after a spaces will be removed   |" << endl
-         << "|================================================|" << endl << endl;
-
-
-    //string type variable to store file name
-    string file_name;
-
-    //depending on the account type we will use different file
-    //to store different account type's credentials
-    if(account_type == ACCOUNT_TYPES::TEACHER)
-        file_name = TEACHER_CRED_FILE_NAME;
-    else if(account_type == ACCOUNT_TYPES::STUDENT)
-        file_name = STUDENT_CRED_FILE_NAME;
-
-    //declaring and opening input file stream
-    ifstream input_file(file_name);
-    //declaring and opening output file stream and also we are passing "ios::app" flag
-    //so that we can append the file instead of replacing the file
-    ofstream output_file(file_name, ios::app);
-
-
-
-
-    //enum to refer table headers
-    enum TABLE_HEADERS
+    if(account_type != ACCOUNT_TYPES::RETURN_TO_MAIN_SCREEN)
     {
-        FIRST_NAME = 0,
-        LAST_NAME,
-        USER_NAME,
-        PASSWORD
-    };
+        //clearing console screen
+        system("cls");
 
-    //boolean variable
-    //to check if a username already exists in our database
-    bool user_exists = false;
+        get_secondary_color();
+        cout << "|================================================|" << endl
+             << "|                 Input Rules                    |" << endl
+             << "|================================================|" << endl
+             << "|    o Inputs Cannot Contain Any Comma(s)        |" << endl
+             << "|------------------------------------------------|" << endl
+             << "|    o First Name Cannot Contain Any Space(s)    |" << endl
+             << "|------------------------------------------------|" << endl
+             << "|    o Last Name Cannot Contain Any Space(s)     |" << endl
+             << "|------------------------------------------------|" << endl
+             << "|    o User Name Cannot Contain Any Space(s)     |" << endl
+             << "|------------------------------------------------|" << endl
+             << "|    o Password Cannot Contain Any Space(s)      |" << endl
+             << "|------------------------------------------------|" << endl
+             << "|    x Any extra space(s) will be removed        |" << endl
+             << "|------------------------------------------------|" << endl
+             << "|    x Anything after space(s) will be removed   |" << endl
+             << "|================================================|" << endl << endl;
+
+        cout << endl;
+        cout << "Type 0 (Zero) to cancel the operation and return to the main screen" << endl;
+
+        //string type variable to store file name
+        string file_name;
+
+        //depending on the account type we will use different file
+        //to store different account type's credentials
+        if(account_type == ACCOUNT_TYPES::TEACHER)
+            file_name = TEACHER_CRED_FILE_NAME;
+        else if(account_type == ACCOUNT_TYPES::STUDENT)
+            file_name = STUDENT_CRED_FILE_NAME;
+
+        //declaring and opening input file stream
+        ifstream input_file(file_name);
+        //declaring and opening output file stream and also we are passing "ios::app" flag
+        //so that we can append the file instead of replacing the file
+        ofstream output_file(file_name, ios::app);
 
 
 
-    //if the file exists the this condition will execute
-    if(input_file.good())
-    {
-        //running a while loop and extracting datas from the filestream
-        //until we reach to the end of the file
-        while(!input_file.eof())
-            {
-                //this variable will store each line from the filestream temporarily
-                string temp_data = "";
-                //we will separate temp_data by comma delimeter
-                //and we will store those multiple datas in the
-                //temporary vector
-                vector<string> temp_vector;
 
-                //get lines from input file stream and store into temp_data variable
-                getline(input_file, temp_data);
+        //enum to refer table headers
+        enum TABLE_HEADERS
+        {
+            FIRST_NAME = 0,
+            LAST_NAME,
+            USER_NAME,
+            PASSWORD
+        };
 
-                //declaring a stringstream to convert the temp_data string into stream
-                stringstream temp_stream(temp_data);
+        //boolean variable
+        //to check if a username already exists in our database
+        bool user_exists = false;
 
-                //now we will separate datas from string stream by comma delimeter
-                //we will store push those data to the temporary vector
-                while(getline(temp_stream, temp_data, ','))
+
+
+        //if the file exists the this condition will execute
+        if(input_file.good())
+        {
+            //running a while loop and extracting datas from the filestream
+            //until we reach to the end of the file
+            while(!input_file.eof())
                 {
-                    temp_vector.push_back(temp_data);
+                    //this variable will store each line from the filestream temporarily
+                    string temp_data = "";
+                    //we will separate temp_data by comma delimeter
+                    //and we will store those multiple datas in the
+                    //temporary vector
+                    vector<string> temp_vector;
+
+                    //get lines from input file stream and store into temp_data variable
+                    getline(input_file, temp_data);
+
+                    //declaring a stringstream to convert the temp_data string into stream
+                    stringstream temp_stream(temp_data);
+
+                    //now we will separate datas from string stream by comma delimeter
+                    //we will store push those data to the temporary vector
+                    while(getline(temp_stream, temp_data, ','))
+                    {
+                        temp_vector.push_back(temp_data);
+                    }
+
+                    //depending on the account type we will store the temp vector to the original vector
+                    if(account_type == ACCOUNT_TYPES::TEACHER)
+                        teachers_cred_vect.push_back(temp_vector);
+                    else if(account_type == ACCOUNT_TYPES::STUDENT)
+                        students_cred_vect.push_back(temp_vector);
                 }
 
-                //depending on the account type we will store the temp vector to the original vector
-                if(account_type == ACCOUNT_TYPES::TEACHER)
-                    teachers_cred_vect.push_back(temp_vector);
-                else if(account_type == ACCOUNT_TYPES::STUDENT)
-                    students_cred_vect.push_back(temp_vector);
+                //as we are done with the input file stream
+                //now we can close the connection
+                input_file.close();
+
+        }
+
+        //string variables to store user information
+        string first_name, last_name, user_name, password;
+
+        //this infinite loop will run until it gets non duplicated user name
+        //other it will break
+        while(true)
+        {
+
+            //this while loop is being is used
+            //so that we can break the loop any time
+            //without asking for further user input
+
+            while(true)
+            {
+                get_warning_color();
+                cout << "First Name\t";
+                input_validation_for_checking_comma(&first_name);
+                cout << endl;
+                if(first_name == "0")
+                    break;
+
+                get_success_color();
+                cout << "Last Name\t";
+                input_validation_for_checking_comma(&last_name);
+                cout << endl;
+                if(last_name == "0")
+                    break;
+
+                get_warning_color();
+                cout << "User Name\t";
+                input_validation_for_checking_comma(&user_name);
+                cout << endl;
+                if(user_name == "0")
+                    break;
+
+                get_success_color();
+                cout << "Password\t";
+                input_validation_for_checking_comma(&password);
+                cout << endl;
+                break;
             }
 
-            //as we are done with the input file stream
-            //now we can close the connection
-            input_file.close();
-
-    }
-
-    //string variables to store user information
-    string first_name, last_name, user_name, password;
-
-    //this infinite loop will run until it gets non duplicated user name
-    //other it will break
-    while(true)
-    {
-        get_warning_color();
-        cout << "First Name\t";
-        cin >> first_name;
-        ignore_stream_cin();
-        cout << endl;
-
-        get_success_color();
-        cout << "Last Name\t";
-        cin >> last_name;
-        ignore_stream_cin();
-        cout << endl;
-
-        get_warning_color();
-        cout << "User Name\t";
-        cin >> user_name;
-        ignore_stream_cin();
-        cout << endl;
-
-        get_success_color();
-        cout << "Password\t";
-        cin >> password;
-        ignore_stream_cin();
-        cout << endl;
 
 
-        //checking if the account is signed with teacher's credentials
-        //and if the teachers credentials are stored in the teachers_cred_vect
-        //if both are true then it will execute the body of the function
-        if(account_type == ACCOUNT_TYPES::TEACHER && teachers_cred_vect.size() > 0)
-        {
-            //this for loop will go through every username inside the teachers_cred_vect and will check
-            //if there exists any username as same as the input username
-            for(int i = 0; i < teachers_cred_vect.size(); i++)
+            if(first_name == "0" || last_name == "0" || user_name == "0" || password == "0")
             {
-                if(teachers_cred_vect[i][TABLE_HEADERS::USER_NAME] == user_name)
+                break;
+            }
+            else
+            {
+                //checking if the account is signed with teacher's credentials
+                //and if the teachers credentials are stored in the teachers_cred_vect
+                //if both are true then it will execute the body of the function
+                if(account_type == ACCOUNT_TYPES::TEACHER && teachers_cred_vect.size() > 0)
                 {
-                    user_exists = true;
-                    get_danger_color();
-                    cout << "User with the same username already exists!" << endl;
+                    //this for loop will go through every username inside the teachers_cred_vect and will check
+                    //if there exists any username as same as the input username
+                    for(int i = 0; i < teachers_cred_vect.size(); i++)
+                    {
+                        if(teachers_cred_vect[i][TABLE_HEADERS::USER_NAME] == user_name)
+                        {
+                            user_exists = true;
+                            get_danger_color();
+                            cout << "User with the same username already exists!" << endl;
+                            break;
+                        }
+                    }
+                    //if the username exists then the while loop will continue again from the start
+                    //and it will ask the user to put another username
+                    if(user_exists)
+                    {
+                        user_exists = false;
+                        continue;
+                    }
+                }
+                //checking if the account is signed with students's credentials
+                //and if the teachers credentials are stored in the students_cred_vect
+                //if both are true then it will execute the body of the function
+                else if(account_type == ACCOUNT_TYPES::STUDENT && students_cred_vect.size() > 0)
+                {
+                    //this for loop will go through every username inside the students_cred_vect and will check
+                    //if there exists any username as same as the input username
+                    for(int i = 0; i < students_cred_vect.size(); i++)
+                    {
+                        if(students_cred_vect[i][TABLE_HEADERS::USER_NAME] == user_name)
+                        {
+                            user_exists = true;
+                            get_danger_color();
+                            cout << "User with the same username already exists!" << endl;
+                            break;
+                        }
+                    }
+                    //if the username exists then the while loop will continue again from the start
+                    //and it will ask the user to put another username
+                    if(user_exists)
+                    {
+                        user_exists = false;
+                        continue;
+                    }
+                }
+
+                //if there is no username as same as username from students_cred_vect or teachers_cred_vect
+                //then the while loop will break
+                if(!user_exists)
+                {
                     break;
                 }
             }
-            //if the username exists then the while loop will continue again from the start
-            //and it will ask the user to put another username
-            if(user_exists)
-            {
-                user_exists = false;
-                continue;
-            }
-        }
-        //checking if the account is signed with students's credentials
-        //and if the teachers credentials are stored in the students_cred_vect
-        //if both are true then it will execute the body of the function
-        else if(account_type == ACCOUNT_TYPES::STUDENT && students_cred_vect.size() > 0)
-        {
-            //this for loop will go through every username inside the students_cred_vect and will check
-            //if there exists any username as same as the input username
-            for(int i = 0; i < students_cred_vect.size(); i++)
-            {
-                if(students_cred_vect[i][TABLE_HEADERS::USER_NAME] == user_name)
-                {
-                    user_exists = true;
-                    get_danger_color();
-                    cout << "User with the same username already exists!" << endl;
-                    break;
-                }
-            }
-            //if the username exists then the while loop will continue again from the start
-            //and it will ask the user to put another username
-            if(user_exists)
-            {
-                user_exists = false;
-                continue;
-            }
         }
 
-        //if there is no username as same as username from students_cred_vect or teachers_cred_vect
-        //then the while loop will break
-        if(!user_exists)
+        if(first_name != "0" && last_name != "0" && user_name != "0" && password != "0")
         {
-            break;
+            //students_cred_vect or teachers_cred_vect vectors size will be greater than 0
+            //if there exists any data inside the file, the ifstream reading from
+            //if there is any data inside the file then we will put newline to separate new row inside the file
+            if(account_type == ACCOUNT_TYPES::TEACHER && teachers_cred_vect.size() > 0)
+                output_file << endl;
+            else if(account_type == ACCOUNT_TYPES::STUDENT && students_cred_vect.size() > 0)
+                output_file << endl;
+            //this statement store data as a column data by separating them using comma delimeter
+            output_file << first_name << ","
+                            << last_name << ","
+                            << user_name << ","
+                            << password;
+            //if there account type is for student sign up
+            //then this statment will insert students enrollment status in the file
+            if(account_type == ACCOUNT_TYPES::STUDENT)
+                output_file << "," << STUDENT_ENROLL_STATUS::NOT_ENROLLED;
+
+            //closing the output stream file
+            output_file.close();
+
+            //depending on the account type
+            //this statement will clear the vectors
+            //as we don't need them any more
+            if(account_type == ACCOUNT_TYPES::TEACHER)
+                teachers_cred_vect.clear();
+            else if(account_type == ACCOUNT_TYPES::STUDENT)
+                students_cred_vect.clear();
+
+            get_success_color();
+            system("cls");
+            cout << "User registration completed successfully!!" << endl;
         }
+
+
+        get_default_color();
+
+        system("pause");
     }
-
-    //students_cred_vect or teachers_cred_vect vectors size will be greater than 0
-    //if there exists any data inside the file, the ifstream reading from
-    //if there is any data inside the file then we will put newline to separate new row inside the file
-    if(account_type == ACCOUNT_TYPES::TEACHER && teachers_cred_vect.size() > 0)
-        output_file << endl;
-    else if(account_type == ACCOUNT_TYPES::STUDENT && students_cred_vect.size() > 0)
-        output_file << endl;
-    //this statement store data as a column data by separating them using comma delimeter
-    output_file << first_name << ","
-                    << last_name << ","
-                    << user_name << ","
-                    << password;
-    //if there account type is for student sign up
-    //then this statment will insert students enrollment status in the file
-    if(account_type == ACCOUNT_TYPES::STUDENT)
-        output_file << "," << STUDENT_ENROLL_STATUS::NOT_ENROLLED;
-
-    //closing the output stream file
-    output_file.close();
-
-    //depending on the account type
-    //this statement will clear the vectors
-    //as we don't need them any more
-    if(account_type == ACCOUNT_TYPES::TEACHER)
-        teachers_cred_vect.clear();
-    else if(account_type == ACCOUNT_TYPES::STUDENT)
-        students_cred_vect.clear();
-
-    get_success_color();
-    system("cls");
-    cout << "User registration completed successfully!!" << endl;
-    get_default_color();
 }
 
 void sign_in()
@@ -600,177 +679,189 @@ void sign_in()
 
 
 
-    //string variable to store file name
-    string file_name;
-
-    //depending on the account type we are going to assign the file name to the variable
-    if(account_type == ACCOUNT_TYPES::TEACHER)
-        file_name = TEACHER_CRED_FILE_NAME;
-    else if(account_type == ACCOUNT_TYPES::STUDENT)
-        file_name = STUDENT_CRED_FILE_NAME;
-
-    //input file stream to read the students or teachers credentials file
-    ifstream input_file(file_name);
-
-
-
-    //if the file opened successfully then it will execute the body of the if condition
-    if(input_file.good())
+    if(account_type != ACCOUNT_TYPES::RETURN_TO_MAIN_SCREEN)
     {
-        //this loop will run until it teaches to the
-        //end of the input file
-        while(!input_file.eof())
-            {
-                //string variable to store temp data
-                //we will read each line from the input file stream
-                //then we will store the line here temporarily
-                string temp_data = "";
+        //string variable to store file name
+        string file_name;
 
-                //this string type vector is for temporary data store
-                //we will separate the temp_data by comma delimeter
-                //as every line in the file has comma to separate each column data
-                vector<string> temp_vector;
+        //depending on the account type we are going to assign the file name to the variable
+        if(account_type == ACCOUNT_TYPES::TEACHER)
+            file_name = TEACHER_CRED_FILE_NAME;
+        else if(account_type == ACCOUNT_TYPES::STUDENT)
+            file_name = STUDENT_CRED_FILE_NAME;
 
-                //this statement gets the line from the file one by one
-                getline(input_file, temp_data);
-
-                //now we are storing the line to a stringstream type variable
-                //so that we can separate each data of the stream by comma delimeter
-                stringstream temp_stream(temp_data);
-
-                //separating each data of the current line by comma delimeter
-                //and pushing them inside the temp vector
-                while(getline(temp_stream, temp_data, ','))
-                {
-                    temp_vector.push_back(temp_data);
-                }
-
-                //depending on the account type we will store temp vector
-                //inside the 2d string type vector
-                if(account_type == ACCOUNT_TYPES::TEACHER)
-                    teachers_cred_vect.push_back(temp_vector);
-                else if(account_type == ACCOUNT_TYPES::STUDENT)
-                    students_cred_vect.push_back(temp_vector);
-            }
-
-            //closing the input file stream
-            input_file.close();
-
-    }
-
-    //string variable to store user name and password
-    string user_name, password;
+        //input file stream to read the students or teachers credentials file
+        ifstream input_file(file_name);
 
 
 
-    //this loop will run infinitely until
-    //it gets correct username and password
-    while(true)
-    {
-        cout << endl;
-
-        get_default_color();
-        cout << "User Name\t";
-        cin >> user_name;
-        ignore_stream_cin();
-        cout << endl;
-
-        cout << "Password\t";
-        cin >> password;
-        ignore_stream_cin();
-        cout << endl;
-
-        //depending on the account type and size of the credential vector any one if condition will run
-        //size of the vector will be greater than 0 when there is a credential file and the input file stream can read that file
-        //or if the credential file has any data inside it
-        if(account_type == ACCOUNT_TYPES::TEACHER && teachers_cred_vect.size() > 0)
+        //if the file opened successfully then it will execute the body of the if condition
+        if(input_file.good())
         {
-            get_danger_color();
-            //this for loop will go through every username and password from the teachers_cred_vect
-            //if it can validate the password and username then USER_LOGGED_IN will be true which is by default false
-            //it username and password are correct then the if statement inside this for loop will store the firstname, lastname and username of the user
-            //for future reference so that we don't have to read the file everytime to get the info for current logged in user
-            //and the for loop will break if the username and password are correct
-            for(int i = 0; i < teachers_cred_vect.size(); i++)
-            {
-                if(teachers_cred_vect[i][TABLE_HEADERS_CRED::USER_NAME] == user_name && teachers_cred_vect[i][TABLE_HEADERS_CRED::PASSWORD] == password)
+            //this loop will run until it teaches to the
+            //end of the input file
+            while(!input_file.eof())
                 {
-                    USER_LOGGED_IN = true;
-                    logged_in_user_info_vec.push_back(teachers_cred_vect[i][TABLE_HEADERS_CRED::FIRST_NAME]);
-                    logged_in_user_info_vec.push_back(teachers_cred_vect[i][TABLE_HEADERS_CRED::LAST_NAME]);
-                    logged_in_user_info_vec.push_back(teachers_cred_vect[i][TABLE_HEADERS_CRED::USER_NAME]);
-                    get_danger_color();
-                    cout << "User logged in with username ";
-                    get_warning_color();
-                    cout << user_name << endl;
-                    break;
+                    //string variable to store temp data
+                    //we will read each line from the input file stream
+                    //then we will store the line here temporarily
+                    string temp_data = "";
+
+                    //this string type vector is for temporary data store
+                    //we will separate the temp_data by comma delimeter
+                    //as every line in the file has comma to separate each column data
+                    vector<string> temp_vector;
+
+                    //this statement gets the line from the file one by one
+                    getline(input_file, temp_data);
+
+                    //now we are storing the line to a stringstream type variable
+                    //so that we can separate each data of the stream by comma delimeter
+                    stringstream temp_stream(temp_data);
+
+                    //separating each data of the current line by comma delimeter
+                    //and pushing them inside the temp vector
+                    while(getline(temp_stream, temp_data, ','))
+                    {
+                        temp_vector.push_back(temp_data);
+                    }
+
+                    //depending on the account type we will store temp vector
+                    //inside the 2d string type vector
+                    if(account_type == ACCOUNT_TYPES::TEACHER)
+                        teachers_cred_vect.push_back(temp_vector);
+                    else if(account_type == ACCOUNT_TYPES::STUDENT)
+                        students_cred_vect.push_back(temp_vector);
                 }
-            }
-            //if the username and password or either on them is not correct
-            //then the following if condition will execute
-            //the while loop will be continued from the beginning asking the user to input correct
-            //username and password
-            if(!USER_LOGGED_IN)
-            {
-                cout << "Invalid user name or password! Try again" << endl;
-                continue;
-            }
+
+                //closing the input file stream
+                input_file.close();
+
         }
-        else if(account_type == ACCOUNT_TYPES::STUDENT && students_cred_vect.size() > 0)
+
+        cout << endl;
+        cout << "Type 0 (Zero) to cancel the operation and return to the main screen" << endl;
+
+        //string variable to store user name and password
+        string user_name, password;
+
+
+
+        //this loop will run infinitely until
+        //it gets correct username and password
+        while(true)
         {
-            //this for loop will go through every username and password from the students_cred_vect
-            //if it can validate the password and username then USER_LOGGED_IN will be true which is by default false
-            //it username and password are correct then the if statement inside this for loop will store the firstname, lastname and username of the user
-            //for future reference so that we don't have to read the file everytime to get the info for current logged in user
-            //and the for loop will break if the username and password are correct
-            for(int i = 0; i < students_cred_vect.size(); i++)
+            cout << endl;
+
+            get_default_color();
+            cout << "User Name\t";
+            cin >> user_name;
+            ignore_stream_cin();
+            cout << endl;
+
+            if(user_name == "0")
+                break;
+
+            cout << "Password\t";
+            cin >> password;
+            ignore_stream_cin();
+            cout << endl;
+
+            if(password == "0")
+                break;
+
+            //depending on the account type and size of the credential vector any one if condition will run
+            //size of the vector will be greater than 0 when there is a credential file and the input file stream can read that file
+            //or if the credential file has any data inside it
+            if(account_type == ACCOUNT_TYPES::TEACHER && teachers_cred_vect.size() > 0)
             {
-                if(students_cred_vect[i][TABLE_HEADERS_CRED::USER_NAME] == user_name && students_cred_vect[i][TABLE_HEADERS_CRED::PASSWORD] == password)
+                get_danger_color();
+                //this for loop will go through every username and password from the teachers_cred_vect
+                //if it can validate the password and username then USER_LOGGED_IN will be true which is by default false
+                //it username and password are correct then the if statement inside this for loop will store the firstname, lastname and username of the user
+                //for future reference so that we don't have to read the file everytime to get the info for current logged in user
+                //and the for loop will break if the username and password are correct
+                for(int i = 0; i < teachers_cred_vect.size(); i++)
                 {
-                    get_success_color();
-                    USER_LOGGED_IN = true;
-                    logged_in_user_info_vec.push_back(students_cred_vect[i][TABLE_HEADERS_CRED::FIRST_NAME]);
-                    logged_in_user_info_vec.push_back(students_cred_vect[i][TABLE_HEADERS_CRED::LAST_NAME]);
-                    logged_in_user_info_vec.push_back(students_cred_vect[i][TABLE_HEADERS_CRED::USER_NAME]);
-                    logged_in_user_info_vec.push_back("");
-                    logged_in_user_info_vec.push_back(students_cred_vect[i][TABLE_HEADERS_CRED::STUDENT_ENROLL_STATUS]);
-                    get_danger_color();
-                    cout << "User logged in with username !" << user_name << endl;
-                    break;
+                    if(teachers_cred_vect[i][TABLE_HEADERS_CRED::USER_NAME] == user_name && teachers_cred_vect[i][TABLE_HEADERS_CRED::PASSWORD] == password)
+                    {
+                        USER_LOGGED_IN = true;
+                        logged_in_user_info_vec.push_back(teachers_cred_vect[i][TABLE_HEADERS_CRED::FIRST_NAME]);
+                        logged_in_user_info_vec.push_back(teachers_cred_vect[i][TABLE_HEADERS_CRED::LAST_NAME]);
+                        logged_in_user_info_vec.push_back(teachers_cred_vect[i][TABLE_HEADERS_CRED::USER_NAME]);
+                        get_danger_color();
+                        cout << "User logged in with username ";
+                        get_warning_color();
+                        cout << user_name << endl;
+                        break;
+                    }
+                }
+                //if the username and password or either on them is not correct
+                //then the following if condition will execute
+                //the while loop will be continued from the beginning asking the user to input correct
+                //username and password
+                if(!USER_LOGGED_IN)
+                {
+                    cout << "Invalid user name or password! Try again" << endl;
+                    continue;
                 }
             }
-            //if the username and password or either on them is not correct
-            //then the following if condition will execute
-            //the while loop will be continued from the beginning asking the user to input correct
-            //username and password
+            else if(account_type == ACCOUNT_TYPES::STUDENT && students_cred_vect.size() > 0)
+            {
+                //this for loop will go through every username and password from the students_cred_vect
+                //if it can validate the password and username then USER_LOGGED_IN will be true which is by default false
+                //it username and password are correct then the if statement inside this for loop will store the firstname, lastname and username of the user
+                //for future reference so that we don't have to read the file everytime to get the info for current logged in user
+                //and the for loop will break if the username and password are correct
+                for(int i = 0; i < students_cred_vect.size(); i++)
+                {
+                    if(students_cred_vect[i][TABLE_HEADERS_CRED::USER_NAME] == user_name && students_cred_vect[i][TABLE_HEADERS_CRED::PASSWORD] == password)
+                    {
+                        get_success_color();
+                        USER_LOGGED_IN = true;
+                        logged_in_user_info_vec.push_back(students_cred_vect[i][TABLE_HEADERS_CRED::FIRST_NAME]);
+                        logged_in_user_info_vec.push_back(students_cred_vect[i][TABLE_HEADERS_CRED::LAST_NAME]);
+                        logged_in_user_info_vec.push_back(students_cred_vect[i][TABLE_HEADERS_CRED::USER_NAME]);
+                        logged_in_user_info_vec.push_back("");
+                        logged_in_user_info_vec.push_back(students_cred_vect[i][TABLE_HEADERS_CRED::STUDENT_ENROLL_STATUS]);
+                        get_danger_color();
+                        cout << "User logged in with username !" << user_name << endl;
+                        break;
+                    }
+                }
+                //if the username and password or either on them is not correct
+                //then the following if condition will execute
+                //the while loop will be continued from the beginning asking the user to input correct
+                //username and password
+                if(!USER_LOGGED_IN)
+                {
+                    get_danger_color();
+                    cout << "Invalid user name or password! Try again" << endl;
+                    continue;
+                }
+            }
+
+            //if the input file stream cannot read the credential file
+            //then the size of the credential vector will be zero
+            //or if there is no data inside the credential file then the size of the credential vector will be 0
+            //so that any of the previous conditions will not execute and the USER_LOGGED_IN variable will be false
+            //and then the following if condition's body will be executed
             if(!USER_LOGGED_IN)
             {
                 get_danger_color();
-                cout << "Invalid user name or password! Try again" << endl;
-                continue;
+                cout << "User doesn't exist! Try to sign up and login again!" << endl;
             }
-        }
 
-        //if the input file stream cannot read the credential file
-        //then the size of the credential vector will be zero
-        //or if there is no data inside the credential file then the size of the credential vector will be 0
-        //so that any of the previous conditions will not execute and the USER_LOGGED_IN variable will be false
-        //and then the following if condition's body will be executed
-        if(!USER_LOGGED_IN)
-        {
-            get_danger_color();
-            cout << "User doesn't exist! Try to sign up and login again!" << endl;
-        }
-
-        //depending on the account type we are going to
-        //clear the credential vector and breaking the infinite while loop
-        if(USER_LOGGED_IN)
-        {
-            if(account_type == ACCOUNT_TYPES::TEACHER)
-                teachers_cred_vect.clear();
-            else if(account_type == ACCOUNT_TYPES::STUDENT)
-                students_cred_vect.clear();
-            break;
+            //depending on the account type we are going to
+            //clear the credential vector and breaking the infinite while loop
+            if(USER_LOGGED_IN)
+            {
+                if(account_type == ACCOUNT_TYPES::TEACHER)
+                    teachers_cred_vect.clear();
+                else if(account_type == ACCOUNT_TYPES::STUDENT)
+                    students_cred_vect.clear();
+                break;
+            }
         }
     }
 
@@ -853,13 +944,15 @@ void show_account_types_menu()
 
     int selected_choice;
     get_secondary_color();
-    cout << "|==================|" << endl
-         << "|   Account Type   |" << endl
-         << "|==================|" << endl
-         << "|    1. Teacher    |" << endl
-         << "|------------------|" << endl
-         << "|    2. Student    |" << endl
-         << "|==================|" << endl << endl;
+    cout << "|================================|" << endl
+         << "|          Account Type          |" << endl
+         << "|================================|" << endl
+         << "|    0. Return To Main Screen    |" << endl
+         << "|--------------------------------|" << endl
+         << "|    1. Teacher                  |" << endl
+         << "|--------------------------------|" << endl
+         << "|    2. Student                  |" << endl
+         << "|================================|" << endl << endl;
 
     get_warning_color();
     cout << "Select an option from the above. Use any positive integer number corresponding to each item\t";
@@ -874,10 +967,15 @@ void show_account_types_menu()
         {
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "You cannot write any symbol or letter! Try again.\t";
+            continue;
         }
 
         switch(selected_choice)
         {
+            case ACCOUNT_TYPES::RETURN_TO_MAIN_SCREEN:
+                account_type = ACCOUNT_TYPES::RETURN_TO_MAIN_SCREEN;
+                break;
             case ACCOUNT_TYPES::TEACHER:
                 account_type = ACCOUNT_TYPES::TEACHER;
                 break;
@@ -928,7 +1026,30 @@ void show_teacher_dashboard()
     get_warning_color();
     cout << "Select an option from the above. Use any positive integer number corresponding to each item\t";
 
-    cin >> selected_choice;
+
+    //this infinite while loop will loop execute
+    //until it gets valid input
+    while(true)
+    {
+        cin >> selected_choice;
+        get_danger_color();
+        if(cin.rdstate() == 4)
+        {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "You cannot write any symbol or letter! Try again.\t";
+        }
+        else if(selected_choice > choices::LOG_OUT || selected_choice < choices::SHOW_PROFILE)
+        {
+            cout << "Invalid input out of range. Try again\t";
+        }
+        else
+        {
+            cout << endl;
+            break;
+        }
+
+    }
 
     switch(selected_choice)
     {
@@ -980,7 +1101,29 @@ void show_student_dashboard()
     get_warning_color();
     cout << "Select an option from the above. Use any positive integer number corresponding to each item\t";
 
-    cin >> selected_choice;
+    //this infinite while loop will loop execute
+    //until it gets valid input
+    while(true)
+    {
+        cin >> selected_choice;
+        get_danger_color();
+        if(cin.rdstate() == 4)
+        {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "You cannot write any symbol or letter! Try again.\t";
+        }
+        else if(selected_choice > choices::LOG_OUT || selected_choice < choices::SHOW_PROFILE)
+        {
+            cout << "Invalid input out of range. Try again\t";
+        }
+        else
+        {
+            cout << endl;
+            break;
+        }
+
+    }
 
     //based on the input for selected choice
     //the following switch case will execute any one of the following functions
@@ -1780,6 +1923,36 @@ void option_selection_for_student_data_modification(vector<vector<string>>* stud
     }
 }
 
+//function body to validate if the input for marks is integer
+void input_marks_validation_for_int_only(int* mark_input)
+{
+    int RETURN_TO_DASHBOARD = -2, HIGHERST_MARK = 100;
+
+    //this infinite while loop will loop execute
+    //until it gets valid input
+    while(true)
+    {
+        cin >> *mark_input;
+        get_danger_color();
+        if(cin.rdstate() == 4)
+        {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "You cannot write any symbol or letter! Try again.\t";
+        }
+        else if(*mark_input > HIGHERST_MARK || *mark_input < RETURN_TO_DASHBOARD)
+        {
+            cout << "Invalid input out of range. Try again\t";
+        }
+        else
+        {
+            cout << endl;
+            break;
+        }
+
+    }
+}
+
 //function body to assign marks to the enrolled student
 void assign_marks(vector<vector<string>>* student_list, vector<int>* column_widths)
 {
@@ -1832,122 +2005,141 @@ void assign_marks(vector<vector<string>>* student_list, vector<int>* column_widt
         int math_number, physics_number, chemistry_number;
 
         get_warning_color();
-        cout << "Type any integer number. To input \"Not Graded\" type -1 (Negative One)" << endl;
+        cout << "Type any integer number from 0 to 100. To input \"Not Graded\" type -1 (Negative One)" << endl;
+        cout << "Type -2 (Negative Two) to cancel the operation" << endl;
         cout << "Selected Student:\t" << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::FIRST_NAME] << " "
              << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::LAST_NAME] << endl;
 
         cout << endl;
 
-        get_default_color();
-        cout << "Math Marks:\t";
-        cin >> math_number;
-        cout << endl;
 
-        cout << "Physics Narks:\t";
-        cin >> physics_number;
-        cout << endl;
-
-        cout << "Chemistry Marks:\t";
-        cin >> chemistry_number;
-        cout << endl;
-
-        //based on the user input for the marks
-        //the following statements will change the marks of the student_list vector address
-        student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::MATH] = math_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(math_number);
-        student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::PHYSICS] = physics_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(physics_number);
-        student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::CHEMISTRY] = chemistry_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(chemistry_number);
-
-        //2d string type vector to store all the students along with the modified student
-        vector<vector<string>> modified_student_datas;
-
-        //input file stream for enrolled student data
-        ifstream input_file(ENROLLED_STUDENT_DATA_FILE_NAME);
-
-        //output file stream for temp file,
-        //the following function also has appending flag as its second argument
-        ofstream output_file(TEMP_FILE, ios::app);
-
-        //this outer while will be executed until
-        //the input file stream for enrolled students data reach to the end of the file
-        while(!input_file.eof())
+        //this while loop is being is used
+        //so that we can break the loop any time
+        //without asking for further user input
+        while(true)
         {
-            //string type temp variable
-            //this variable will contain each line from the input file stream for a sudden period
-            //the datas will be for enrolled students info
-            string temp_data = "";
+            get_default_color();
+            cout << "Math Marks:\t";
+            input_marks_validation_for_int_only(&math_number);
+            if(math_number == -2)
+                break;
+            cout << endl;
 
-            //string type vector
-            //this temp vector will contain each data separated by comma delimeter which we will get from the temp_string
-            vector<string> temp_vector;
+            get_default_color();
+            cout << "Physics Narks:\t";
+            input_marks_validation_for_int_only(&physics_number);
+            if(physics_number == -2)
+                break;
+            cout << endl;
 
-             //we are getting each line from the enrolled students' data input file stream separated by newline delimeter
-            //and storing the individual line in a temp_data for a sudden period
-            getline(input_file, temp_data);
-
-            //converting the temp_data variable's string into stringstream
-            //so that we can apply the getline() function on the temp_data again
-            //we will apply the getline function again to separate each comma delimetered strings which are being contained by
-            //the temp_data
-            stringstream temp_stream(temp_data);
-
-            //the following while loop will run until there is no comma delimeter
-            //and it will separate each string by comma delimeter
-            //and will store it to the temp_data variable
-            //then the inside of the body of the while loop will run the statement
-            //which is going to store each separated data inside the temp_vector vector
-            while(getline(temp_stream, temp_data, ','))
-            {
-                temp_vector.push_back(temp_data);
-            }
-
-            //the following function will check if the temp vector's user name is similar to the
-            //students list's selected student's username
-            //if it is true then the temp vectors course info will be chenged
-            //then we will push the temp vector inside the modified vector
-            //if it is not true then the data will unchanged as it was
-            if(temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::STUDENT_USERNAME] == student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::USER_NAME])
-            {
-                temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::MATH] = math_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(math_number);
-                temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::PHYSICS] = physics_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(physics_number);
-                temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::CHEMISTRY] = chemistry_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(chemistry_number);
-                modified_student_datas.push_back(temp_vector);
-            }
-            else
-                modified_student_datas.push_back(temp_vector);
+            get_default_color();
+            cout << "Chemistry Marks:\t";
+            input_marks_validation_for_int_only(&chemistry_number);
+            cout << endl;
+            break;
         }
 
-        //closing the file stream
-        input_file.close();
 
-        //removing the enrolled students file from the storage
-        remove(ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
-
-        //this for loop will go through the 2d string data type vector which we modified earlier
-        //then it will store the data into the temp output file
-        for(int row = 0; row < modified_student_datas.size(); row++)
+        if(math_number != -2 && physics_number != -2 && chemistry_number != -2)
         {
-            for(int column = 0; column < modified_student_datas[row].size(); column++)
+            //based on the user input for the marks
+            //the following statements will change the marks of the student_list vector address
+            student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::MATH] = math_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(math_number);
+            student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::PHYSICS] = physics_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(physics_number);
+            student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::CHEMISTRY] = chemistry_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(chemistry_number);
+
+            //2d string type vector to store all the students along with the modified student
+            vector<vector<string>> modified_student_datas;
+
+            //input file stream for enrolled student data
+            ifstream input_file(ENROLLED_STUDENT_DATA_FILE_NAME);
+
+            //output file stream for temp file,
+            //the following function also has appending flag as its second argument
+            ofstream output_file(TEMP_FILE, ios::app);
+
+            //this outer while will be executed until
+            //the input file stream for enrolled students data reach to the end of the file
+            while(!input_file.eof())
             {
-                if(column == 0 && row != 0)
-                    output_file << "\n";
+                //string type temp variable
+                //this variable will contain each line from the input file stream for a sudden period
+                //the datas will be for enrolled students info
+                string temp_data = "";
 
-                output_file << modified_student_datas[row][column];
+                //string type vector
+                //this temp vector will contain each data separated by comma delimeter which we will get from the temp_string
+                vector<string> temp_vector;
 
-                if(column != modified_student_datas[row].size() - 1)
-                    output_file << ",";
+                 //we are getting each line from the enrolled students' data input file stream separated by newline delimeter
+                //and storing the individual line in a temp_data for a sudden period
+                getline(input_file, temp_data);
+
+                //converting the temp_data variable's string into stringstream
+                //so that we can apply the getline() function on the temp_data again
+                //we will apply the getline function again to separate each comma delimetered strings which are being contained by
+                //the temp_data
+                stringstream temp_stream(temp_data);
+
+                //the following while loop will run until there is no comma delimeter
+                //and it will separate each string by comma delimeter
+                //and will store it to the temp_data variable
+                //then the inside of the body of the while loop will run the statement
+                //which is going to store each separated data inside the temp_vector vector
+                while(getline(temp_stream, temp_data, ','))
+                {
+                    temp_vector.push_back(temp_data);
+                }
+
+                //the following function will check if the temp vector's user name is similar to the
+                //students list's selected student's username
+                //if it is true then the temp vectors course info will be chenged
+                //then we will push the temp vector inside the modified vector
+                //if it is not true then the data will unchanged as it was
+                if(temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::STUDENT_USERNAME] == student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::USER_NAME])
+                {
+                    temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::MATH] = math_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(math_number);
+                    temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::PHYSICS] = physics_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(physics_number);
+                    temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::CHEMISTRY] = chemistry_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(chemistry_number);
+                    modified_student_datas.push_back(temp_vector);
+                }
+                else
+                    modified_student_datas.push_back(temp_vector);
             }
+
+            //closing the file stream
+            input_file.close();
+
+            //removing the enrolled students file from the storage
+            remove(ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
+
+            //this for loop will go through the 2d string data type vector which we modified earlier
+            //then it will store the data into the temp output file
+            for(int row = 0; row < modified_student_datas.size(); row++)
+            {
+                for(int column = 0; column < modified_student_datas[row].size(); column++)
+                {
+                    if(column == 0 && row != 0)
+                        output_file << "\n";
+
+                    output_file << modified_student_datas[row][column];
+
+                    if(column != modified_student_datas[row].size() - 1)
+                        output_file << ",";
+                }
+            }
+
+            //closing the output file stream
+            output_file.close();
+
+            //renaming the temp file with our previously deleted file name
+            rename(TEMP_FILE.c_str(), ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
+
+            get_success_color();
+            cout << endl;
+            cout << "Marks assigned to " << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::FIRST_NAME] << " "
+                 << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::LAST_NAME] << " successfully!" << endl;
         }
-
-        //closing the output file stream
-        output_file.close();
-
-        //renaming the temp file with our previously deleted file name
-        rename(TEMP_FILE.c_str(), ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
-
-        get_success_color();
-        cout << endl;
-        cout << "Marks assigned to " << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::FIRST_NAME] << " "
-             << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::LAST_NAME] << " successfully!" << endl;
     }
 
 
@@ -2049,7 +2241,7 @@ void update_marks(vector<vector<string>>* student_list, vector<int>* column_widt
         if(selected_option != 0)
         {
             get_warning_color();
-            cout << "Type any integer number. To input \"Not Graded\" type -1 (Negative One)" << endl;
+            cout << "Type any integer number from 0 to 100 for marks. To input \"Not Graded\" type -1 (Negative One)" << endl;
             cout << "Type -2 (Negative two) to terminate the operation" << endl;
             cout << "Selected Student:\t" << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::FIRST_NAME] << " "
                  << student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::LAST_NAME] << endl;
@@ -2082,7 +2274,9 @@ void update_marks(vector<vector<string>>* student_list, vector<int>* column_widt
             }
 
             cout << " marks:\t";
-            cin >> updated_marks;
+
+            //function call to validate the input
+            input_marks_validation_for_int_only(&updated_marks);
 
             if(updated_marks != -2)
             {
