@@ -1685,156 +1685,184 @@ void enroll_student(vector<vector<string>> teachers_list)
     //the foloowing 2d string data type vector is to store the students' credentials info
     vector<vector<string>> student_cred_cell_datas;
 
-    cout << "Select a teacher from the above to enroll. Select any positive non-zero integer number\t";
-    cin >> selected_teacher;
+    cout << "Select a teacher from the above to enroll. Select any positive non-zero integer number" << endl;
+    cout << "Type 0 (Zero) to cancel the operation\t";
 
-    //string variables to store temp file name
-    //and to store the file name that store the students' credentials data
-    string temp_file_name = TEMP_FILE;
-    string file_name = STUDENT_CRED_FILE_NAME;
 
-    //input file stream for students' credentials data file
-    ifstream input_file_student_cred(file_name);
-
-    //output file stream for temp file
-    ofstream output_file_student_cred;
-
-    //this outer while will be executed until
-    //the input file stream for students credentials data reach to the end of the file
-    while(!input_file_student_cred.eof())
+    while(true)
     {
-
-        //string type temp variable
-        //this variable will contain each line from the input file stream for a sudden period
-        //the datas will be for students' credentials
-        string temp_data = "";
-
-        //string type vector
-        //this temp vector will contain each data separated by comma delimeter which we will get from the temp_string
-        vector<string> temp_vector;
-
-        //we are getting each line from the students' credentials data input file stream separated by newline delimeter
-        //and storing the individual line in a temp_data for a sudden period
-        getline(input_file_student_cred, temp_data);
-
-        //converting the temp_data variable's string into stringstream
-        //so that we can apply the getline() function on the temp_data again
-        //we will apply the getline function again to separate each comma delimetered strings which are being contained by
-        //the temp_data
-        stringstream temp_stream(temp_data);
-
-        //the following while loop will run until there is no comma delimeter
-        //and it will separate each string by comma delimeter
-        //and will store it to the temp_data variable
-        //then the inside of the body of the while loop will run the statement
-        //which is going to store each separated data inside the temp_vector vector
-        while(getline(temp_stream, temp_data, ','))
+        cin >> selected_teacher;
+        get_danger_color();
+        if(cin.rdstate() == 4)
         {
-            temp_vector.push_back(temp_data);
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "You cannot write any symbol or letter! Try again.\t";
         }
-
-        //the following if condition checks if the temp vector has any username similar as current
-        //logged in student's username
-        //if it is true then we will change the enroll status of the logged in user
-        //in both temp vector and the logged_in_user_info_vec vector
-        //then we will push the temp_vector inside the student_cred_cell_datas
-        //if the condition is not true then the else statement will be executed without modification anything
-        if(temp_vector[TABLE_HEADERS_CRED::USER_NAME] == logged_in_user_info_vec[TABLE_HEADERS_CRED::USER_NAME])
+        else if(selected_teacher > teachers_list.size() || selected_teacher < 0)
         {
-            temp_vector[TABLE_HEADERS_CRED::STUDENT_ENROLL_STATUS] = to_string(STUDENT_ENROLL_STATUS::ENROLLED);
-            logged_in_user_info_vec[TABLE_HEADERS_CRED::STUDENT_ENROLL_STATUS] = to_string(STUDENT_ENROLL_STATUS::ENROLLED);
-            student_cred_cell_datas.push_back(temp_vector);
+            cout << "Invalid input out of range. Try again\t";
         }
         else
-            student_cred_cell_datas.push_back(temp_vector);
-    }
-
-    //closing the input file stream
-    input_file_student_cred.close();
-
-    //removing the previous file that contained the students' credentials data from the storage
-    remove(file_name.c_str());
-
-    //opening the output temp file
-    output_file_student_cred.open(temp_file_name, ios::app);
-
-    //this for loop will go through the 2d string data type vector which we modified earlier
-    //then it will store the data into the temp output file
-    for(int row = 0; row < student_cred_cell_datas.size(); row++)
-    {
-        for(int column = 0; column < student_cred_cell_datas[row].size(); column++)
         {
-            if(column == 0 && row != 0)
-                output_file_student_cred << "\n";
-
-            output_file_student_cred << student_cred_cell_datas[row][column];
-
-            if(column != student_cred_cell_datas[row].size() - 1)
-                output_file_student_cred << ",";
+            cout << endl;
+            break;
         }
+
     }
 
-    //closing the output temp file stream
-    output_file_student_cred.close();
+    get_default_color();
 
-    //renaming the temp file with our previously deleted file name
-    rename(temp_file_name.c_str(), file_name.c_str());
-
-    //output file stream for enrolled students data
-    ofstream output_file_enrolled_student;
-    output_file_enrolled_student.open(ENROLLED_STUDENT_DATA_FILE_NAME, ios::app);
-
-    //if the output file stream opened correctly then the else condition will be executed
-    if(!output_file_enrolled_student)
+    if(selected_teacher != 0)
     {
-        cout << "ERROR: Something went wrong! Could not open the file" << endl;
-    }
-    else
-    {
-        //boolean data type variable to store if the file exists
-        bool data_exists_in_enrolled_students_file = false;
+        //string variables to store temp file name
+        //and to store the file name that store the students' credentials data
+        string temp_file_name = TEMP_FILE;
+        string file_name = STUDENT_CRED_FILE_NAME;
 
-        //string type temp variable
-        //this variable will contain each line from the input file stream for a sudden period
-        //the datas will be for enrolled student's course info
-        string temp_data = "";
+        //input file stream for students' credentials data file
+        ifstream input_file_student_cred(file_name);
 
-        //input file stream to read enrolled students' datas
-        ifstream input_file_enrolled_students(ENROLLED_STUDENT_DATA_FILE_NAME);
+        //output file stream for temp file
+        ofstream output_file_student_cred;
 
-        //if the input file stream can be opened
-        //then it will read the data and the data(each line) will be stored in the temp_data variable
-        //then it will check if the temp_data size > 0
-        //which means that the file contains some data
-        //if that is true the the bool variable will be set to true
-        if(input_file_enrolled_students)
+        //this outer while will be executed until
+        //the input file stream for students credentials data reach to the end of the file
+        while(!input_file_student_cred.eof())
         {
-            getline(input_file_enrolled_students, temp_data);
-            if(temp_data.size() > 0)
-                data_exists_in_enrolled_students_file = true;
+
+            //string type temp variable
+            //this variable will contain each line from the input file stream for a sudden period
+            //the datas will be for students' credentials
+            string temp_data = "";
+
+            //string type vector
+            //this temp vector will contain each data separated by comma delimeter which we will get from the temp_string
+            vector<string> temp_vector;
+
+            //we are getting each line from the students' credentials data input file stream separated by newline delimeter
+            //and storing the individual line in a temp_data for a sudden period
+            getline(input_file_student_cred, temp_data);
+
+            //converting the temp_data variable's string into stringstream
+            //so that we can apply the getline() function on the temp_data again
+            //we will apply the getline function again to separate each comma delimetered strings which are being contained by
+            //the temp_data
+            stringstream temp_stream(temp_data);
+
+            //the following while loop will run until there is no comma delimeter
+            //and it will separate each string by comma delimeter
+            //and will store it to the temp_data variable
+            //then the inside of the body of the while loop will run the statement
+            //which is going to store each separated data inside the temp_vector vector
+            while(getline(temp_stream, temp_data, ','))
+            {
+                temp_vector.push_back(temp_data);
+            }
+
+            //the following if condition checks if the temp vector has any username similar as current
+            //logged in student's username
+            //if it is true then we will change the enroll status of the logged in user
+            //in both temp vector and the logged_in_user_info_vec vector
+            //then we will push the temp_vector inside the student_cred_cell_datas
+            //if the condition is not true then the else statement will be executed without modification anything
+            if(temp_vector[TABLE_HEADERS_CRED::USER_NAME] == logged_in_user_info_vec[TABLE_HEADERS_CRED::USER_NAME])
+            {
+                temp_vector[TABLE_HEADERS_CRED::STUDENT_ENROLL_STATUS] = to_string(STUDENT_ENROLL_STATUS::ENROLLED);
+                logged_in_user_info_vec[TABLE_HEADERS_CRED::STUDENT_ENROLL_STATUS] = to_string(STUDENT_ENROLL_STATUS::ENROLLED);
+                student_cred_cell_datas.push_back(temp_vector);
+            }
+            else
+                student_cred_cell_datas.push_back(temp_vector);
         }
 
         //closing the input file stream
-        input_file_enrolled_students.close();
+        input_file_student_cred.close();
 
-        //if the boolean variable is true
-        //then the following statement will put a newline inside the output file stream
-        if(data_exists_in_enrolled_students_file)
-            output_file_enrolled_student << endl;
+        //removing the previous file that contained the students' credentials data from the storage
+        remove(file_name.c_str());
 
-        //storing the newly enrolled student's course info inside the output file
-        output_file_enrolled_student << logged_in_user_info_vec[TABLE_HEADERS_CRED::USER_NAME] << ",";
-        output_file_enrolled_student << teachers_list[selected_teacher][TABLE_HEADERS_CRED::USER_NAME+1] << ",";
-        output_file_enrolled_student << NOT_GRADED << ",";
-        output_file_enrolled_student << NOT_GRADED << ",";
-        output_file_enrolled_student << NOT_GRADED;
+        //opening the output temp file
+        output_file_student_cred.open(temp_file_name, ios::app);
 
-        //closing the output file
-        output_file_enrolled_student.close();
+        //this for loop will go through the 2d string data type vector which we modified earlier
+        //then it will store the data into the temp output file
+        for(int row = 0; row < student_cred_cell_datas.size(); row++)
+        {
+            for(int column = 0; column < student_cred_cell_datas[row].size(); column++)
+            {
+                if(column == 0 && row != 0)
+                    output_file_student_cred << "\n";
 
-        cout << "Enrolled to " << teachers_list[selected_teacher][TABLE_HEADERS_CRED::FIRST_NAME+1] << " "
-             << teachers_list[selected_teacher][TABLE_HEADERS_CRED::LAST_NAME+1] << "'s class successfully!" << endl;
+                output_file_student_cred << student_cred_cell_datas[row][column];
 
+                if(column != student_cred_cell_datas[row].size() - 1)
+                    output_file_student_cred << ",";
+            }
+        }
+
+        //closing the output temp file stream
+        output_file_student_cred.close();
+
+        //renaming the temp file with our previously deleted file name
+        rename(temp_file_name.c_str(), file_name.c_str());
+
+        //output file stream for enrolled students data
+        ofstream output_file_enrolled_student;
+        output_file_enrolled_student.open(ENROLLED_STUDENT_DATA_FILE_NAME, ios::app);
+
+        //if the output file stream opened correctly then the else condition will be executed
+        if(!output_file_enrolled_student)
+        {
+            cout << "ERROR: Something went wrong! Could not open the file" << endl;
+        }
+        else
+        {
+            //boolean data type variable to store if the file exists
+            bool data_exists_in_enrolled_students_file = false;
+
+            //string type temp variable
+            //this variable will contain each line from the input file stream for a sudden period
+            //the datas will be for enrolled student's course info
+            string temp_data = "";
+
+            //input file stream to read enrolled students' datas
+            ifstream input_file_enrolled_students(ENROLLED_STUDENT_DATA_FILE_NAME);
+
+            //if the input file stream can be opened
+            //then it will read the data and the data(each line) will be stored in the temp_data variable
+            //then it will check if the temp_data size > 0
+            //which means that the file contains some data
+            //if that is true the the bool variable will be set to true
+            if(input_file_enrolled_students)
+            {
+                getline(input_file_enrolled_students, temp_data);
+                if(temp_data.size() > 0)
+                    data_exists_in_enrolled_students_file = true;
+            }
+
+            //closing the input file stream
+            input_file_enrolled_students.close();
+
+            //if the boolean variable is true
+            //then the following statement will put a newline inside the output file stream
+            if(data_exists_in_enrolled_students_file)
+                output_file_enrolled_student << endl;
+
+            //storing the newly enrolled student's course info inside the output file
+            output_file_enrolled_student << logged_in_user_info_vec[TABLE_HEADERS_CRED::USER_NAME] << ",";
+            output_file_enrolled_student << teachers_list[selected_teacher][TABLE_HEADERS_CRED::USER_NAME+1] << ",";
+            output_file_enrolled_student << NOT_GRADED << ",";
+            output_file_enrolled_student << NOT_GRADED << ",";
+            output_file_enrolled_student << NOT_GRADED;
+
+            //closing the output file
+            output_file_enrolled_student.close();
+
+            cout << "Enrolled to " << teachers_list[selected_teacher][TABLE_HEADERS_CRED::FIRST_NAME+1] << " "
+                 << teachers_list[selected_teacher][TABLE_HEADERS_CRED::LAST_NAME+1] << "'s class successfully!" << endl;
+
+        }
     }
 }
 
