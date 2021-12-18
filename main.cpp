@@ -1443,7 +1443,7 @@ void show_students_list()
             //current logged in user's username
             //if it is true then the the following statement inside the if statement will
             //push the temp_vector_for_student_course_data vector's student's data inside the students_course_datas_for_current_logged_in_user vector
-            if(temp_vector_for_student_course_data[STUDENT_ENROLLED_TABLE_HEADERS::TEACHER_USERNAME] == logged_in_user_info_vec[TABLE_HEADERS_CRED::USER_NAME])
+            if(temp_vector_for_student_course_data.size() > 0 && temp_vector_for_student_course_data[STUDENT_ENROLLED_TABLE_HEADERS::TEACHER_USERNAME] == logged_in_user_info_vec[TABLE_HEADERS_CRED::USER_NAME])
                 students_course_datas_for_current_logged_in_user.push_back(temp_vector_for_student_course_data);
 
         }
