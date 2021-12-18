@@ -982,6 +982,9 @@ void show_student_dashboard()
 
     cin >> selected_choice;
 
+    //based on the input for selected choice
+    //the following switch case will execute any one of the following functions
+    //if the selected choice is out of range then it will execute the default case
     switch(selected_choice)
     {
         case choices::SHOW_PROFILE:
@@ -998,20 +1001,23 @@ void show_student_dashboard()
     }
 }
 
+//function body to show profile to teachers account or student's account
 void show_profile()
 {
-    string file_name;
 
-    if(account_type == ACCOUNT_TYPES::TEACHER)
-        file_name = TEACHER_CRED_FILE_NAME;
-    else if(account_type == ACCOUNT_TYPES::STUDENT)
-        file_name = STUDENT_CRED_FILE_NAME;
 
+    //2d string data type vecgtor to contain the logged
+    //in user's user information
+    //we are setting the each rows first element as a constant string literal
+    //it is because to show the datas on the table with vertical headers instead of horizontal headers
+    //the data cell will be shown as similar as they are shown below in the table
     vector<vector<string>> cell_datas = {{"First Name", logged_in_user_info_vec[TABLE_HEADERS_CRED::FIRST_NAME]},
                                     {"Last Name", logged_in_user_info_vec[TABLE_HEADERS_CRED::LAST_NAME]},
                                     {"User Name", logged_in_user_info_vec[TABLE_HEADERS_CRED::USER_NAME]}};
+    //int data type vector to contain column widths of the table
     vector<int> column_widths;
 
+    //calculating the column widths based on the previously defined 2d string data type vector's datas
     calculate_width_of_table_columns(cell_datas.size(), cell_datas[0].size(), cell_datas, &column_widths);
 
     get_success_color();
@@ -1026,10 +1032,15 @@ void show_profile()
 
     get_primary_color();
 
+    //drawing the top horizontal line of the table
     draw_horizontal_line(column_widths, '=');
+    //showing the table rows and columns with their corresponding datas
     draw_table_cells(cell_datas.size(), cell_datas[0].size(), cell_datas, column_widths);
+    //drawing the bottom horizontal line of the table
     draw_horizontal_line(column_widths, '=');
 
+    //based on the account type and if the user account is for student and if he/she is enrolled to any course
+    //the following conditions will run
     if(account_type == ACCOUNT_TYPES::STUDENT && stoi(logged_in_user_info_vec[TABLE_HEADERS_CRED::STUDENT_ENROLL_STATUS]) == STUDENT_ENROLL_STATUS::NOT_ENROLLED)
     {
         get_danger_color();
@@ -1038,49 +1049,119 @@ void show_profile()
              << "************************ Select a teacher from the Teachers List ***********************" << endl
              << endl;
     }
+    //if the student is enrolled with any course then the following condition
+    //will show the course teacher's name with course names and their grades
     else if(account_type == ACCOUNT_TYPES::STUDENT && stoi(logged_in_user_info_vec[TABLE_HEADERS_CRED::STUDENT_ENROLL_STATUS]) == STUDENT_ENROLL_STATUS::ENROLLED)
     {
+        //2d string data type vector
+        //this vector contains the table header's names
+        //this if condition will show the student's course info as a table
+        //with horizontal table header
         vector<vector<string>> student_course_info = {{"Teacher", "Math", "Physics", "Chemistry"}};
 
+        //input file stream for enrolled student's information file
         ifstream input_file_student_enrolled_info(ENROLLED_STUDENT_DATA_FILE_NAME);
+
+        //string type temp variable
+        //this variable will contain each line from the input file stream for a sudden period
+        //the datas can be for student or teacher
         string temp_string = "";
+
+        //string type vector
+        //this temp vector will contain each data separated by comma delimeter which we will get from the temp_string
         vector<string> temp_vect;
 
+        //input file stream for teachers' credentials file
         ifstream teachers_cred_file(TEACHER_CRED_FILE_NAME);
+
+        //string type vector
+        //this temp vector will contain each data separated by comma delimeter which we will get from the temp_string
         vector<string> temp_vect_teacher_cred;
 
+        //if the input stream file for student enrolled data can be opened
+        //then the following condition will execute
+        //otherwise the else condition will execute
         if(input_file_student_enrolled_info)
         {
+            //this outer while will be executed until
+            //the input file stream for students' enrolled data reach to the end of the file
             while(!input_file_student_enrolled_info.eof())
             {
+                //we are getting each line from the students' enrolled data input file stream separated by newline delimeter
+                //and storing the individual line in a temp_string for a sudden period
                 getline(input_file_student_enrolled_info, temp_string);
+
+                //converting the temp_string variable's string into stringstream
+                //so that we can apply the getline() function on the temp_string again
+                //we will apply the getline function again to separate each comma delimetered strings which are being contained by
+                //the temp_string
                 stringstream temp_stream(temp_string);
 
+                //the following while loop will run until there is no comma delimeter
+                //and it will separate each string by comma delimeter
+                //and will store it to the temp_string variable
+                //then the inside of the body of the while loop will run the statement
+                //which is going to store each separated data inside the temp_vect vector
                 while(getline(temp_stream, temp_string, ','))
                 {
                     temp_vect.push_back(temp_string);
                 }
+
+                //the following if condition checks if there is any username in the temp_vect that is similar to the
+                //current logged in user's username
                 if(temp_vect[STUDENT_ENROLLED_TABLE_HEADERS::STUDENT_USERNAME] == logged_in_user_info_vec[TABLE_HEADERS_CRED::USER_NAME])
                 {
 
-
+                    //now as we are inside the if condition
+                    //that means we have enrollment data for the current student
+                    //now we need to get the teacher's information for the enrolled student
+                    //the following while loop will run until it reaches to the end of the
+                    //teachers' credentials input file stream
                     while(!teachers_cred_file.eof())
                     {
+                        //we are getting each line from the teachers' credentials data input file stream separated by newline delimeter
+                        //and storing the individual line in a temp_string for a sudden period
                         getline(teachers_cred_file, temp_string);
+
+                        //converting the temp_string variable's string into stringstream
+                        //so that we can apply the getline() function on the temp_string again
+                        //we will apply the getline function again to separate each comma delimetered strings which are being contained by
+                        //the temp_string
                         stringstream temp_stream_teacher(temp_string);
 
+                        //the following while loop will run until there is no comma delimeter
+                        //and it will separate each string by comma delimeter
+                        //and will store it to the temp_string variable
+                        //then the inside of the body of the while loop will run the statement
+                        //which is going to store each separated data inside the temp_vect vector
                         while(getline(temp_stream_teacher, temp_string, ','))
                         {
                             temp_vect_teacher_cred.push_back(temp_string);
                         }
+
+                        //the following if condition checks if there is any username in the temp_vect that is similar to the
+                        //current logged in user's course info datas' teacher username
+                        //if it is true then the while loop will break
+                        //otherwise the temp_vector for teacher_cred will be cleared
+                        //and the current while loop will run again
+                        //until it gets the correct teacher's information
                         if(temp_vect[STUDENT_ENROLLED_TABLE_HEADERS::TEACHER_USERNAME] == temp_vect_teacher_cred[TABLE_HEADERS_CRED::USER_NAME])
                             break;
                         else
                             temp_vect_teacher_cred.clear();
                     }
+
+                    //we are going to store the teacher's first name and last name at the index of temp vector's teacher's username
                     temp_vect[STUDENT_ENROLLED_TABLE_HEADERS::TEACHER_USERNAME] = temp_vect_teacher_cred[TABLE_HEADERS_CRED::FIRST_NAME] + " " + temp_vect_teacher_cred[TABLE_HEADERS_CRED::LAST_NAME];
+
+                    //the following statement will remove the student's username from the temp_vector
                     temp_vect.erase(temp_vect.begin() + STUDENT_ENROLLED_TABLE_HEADERS::STUDENT_USERNAME);
+
+                    //now we are pushing the temp vector inside the student_course_info vector which is a 2d string variable
                     student_course_info.push_back(temp_vect);
+
+                    //breaking the current while loop as we are done
+                    //getting our necessary information
                     break;
                 }
             }
@@ -1090,10 +1171,16 @@ void show_profile()
             cout << "ERROR!!Something went wrong!!" << endl;
         }
 
+        //closing both input file stream
         input_file_student_enrolled_info.close();
         teachers_cred_file.close();
 
+        //int data type vector for column widths information for
+        //the course info table
         vector<int> column_widths_for_student_enroll_info;
+
+        //calculating the width of the columns
+        //based on the current student's course information
         calculate_width_of_table_columns(student_course_info.size(), student_course_info[0].size(), student_course_info, &column_widths_for_student_enroll_info);
 
         get_success_color();
@@ -1101,6 +1188,7 @@ void show_profile()
              << "********************* Course Info ********************" << endl
              << endl;
 
+        //showing the student's course information's table
         get_warning_color();
         draw_horizontal_line(column_widths_for_student_enroll_info, '=');
         draw_table_cells(student_course_info.size(), student_course_info[0].size(), student_course_info, column_widths_for_student_enroll_info);
@@ -1111,13 +1199,18 @@ void show_profile()
     cout << endl;
     get_default_color();
 
+    //pausing the system
     system("pause");
 
 
 }
 
+//function body to show list of enrolled student in the teacher's dashboard
 void show_students_list()
 {
+    //enum data type to refer enrolled student's table
+    //the enrolled students will be shown as same order in each row as the are ordered below but they will be shown horizontally
+    //in the table
     enum STUDENT_LIST_TABLE_HEADRES_INDEX
     {
         SERIAL_NUMBER = 0,
@@ -1128,40 +1221,80 @@ void show_students_list()
         PHYSICS,
         CHEMISTRY
     };
+
+    //2d string data type vector to store enrolled student's data
     vector<vector<string>> cell_datas = {{"Serial Number", "First Name", "Last Name", "User Name", "Math", "Physics", "Chemistry"}};
+
+    //int data type vector to hold the widths of the columns of the enrolled students table
     vector<int> column_widths;
 
 
+    //input file stream for enrolled students data file
+    //and students credentials data file
     ifstream input_file_enrolled_student(ENROLLED_STUDENT_DATA_FILE_NAME);
     ifstream input_file_student_creds(STUDENT_CRED_FILE_NAME);
 
+    //if the file openeded correctly then the following inside body of the if condition
+    //will be executed
     if(input_file_enrolled_student.good())
     {
 
+        //int data type variable
+        //this variable will be used to keep track of the
+        //serial number of the enrolled student
         int index = 0;
+
+        //string type temp variable
+        //this variable will contain each line from the input file stream for a sudden period
+        //the datas can be for student or teacher
         string temp_data = "";
+
+        //string type vector
+        //this temp vector will contain each data separated by comma delimeter which we will get from the temp_string
         vector<string> temp_vector;
+
+        //the foloowing 2d string data type vector is to store the enolled student's courses info
         vector<vector<string>> students_course_datas_for_current_logged_in_user;
+        //the foloowing 2d string data type vector is to store the enolled student's credentials info
         vector<vector<string>> students_creds_for_current_logged_in_user;
 
 
+        //this outer while will be executed until
+        //the input file stream for students' enrolled data reach to the end of the file
         while(!input_file_enrolled_student.eof())
         {
-            //index++;
 
+            //string type vector
+            //this temp vector will contain each data separated by comma delimeter which we will get from the temp_data
             vector<string> temp_vector_for_student_course_data;
 
-            //temp_vector.push_back(to_string(index));
 
+
+            //we are getting each line from the teachers' credentials data input file stream separated by newline delimeter
+            //and storing the individual line in a temp_data for a sudden period
             getline(input_file_enrolled_student, temp_data);
+
+            //converting the temp_data variable's string into stringstream
+            //so that we can apply the getline() function on the temp_data again
+            //we will apply the getline function again to separate each comma delimetered strings which are being contained by
+            //the temp_data
             stringstream temp_stream(temp_data);
 
+            //the following while loop will run until there is no comma delimeter
+            //and it will separate each string by comma delimeter
+            //and will store it to the temp_data variable
+            //then the inside of the body of the while loop will run the statement
+            //which is going to store each separated data inside the temp_vector_for_student_course_data vector
             while(getline(temp_stream, temp_data, ','))
             {
                 temp_vector_for_student_course_data.push_back(temp_data);
             }
 
 
+            //the following if condition checks if there is any teacher's username in the temp_vector_for_student_course_data that is similar to the
+            //current logged in user's username
+            //if it is true then the the following statement inside the if statement will
+            //push the temp_vector_for_student_course_data vector's student's data inside the students_course_datas_for_current_logged_in_user vector
             if(temp_vector_for_student_course_data[STUDENT_ENROLLED_TABLE_HEADERS::TEACHER_USERNAME] == logged_in_user_info_vec[TABLE_HEADERS_CRED::USER_NAME])
                 students_course_datas_for_current_logged_in_user.push_back(temp_vector_for_student_course_data);
 
@@ -1170,19 +1303,46 @@ void show_students_list()
 
 
 
+        //if there is any enrolled student for the current logged in teacher then the
+        //following if condition's body will be executed
+        //otherwise the else condition will be executed
         if(students_course_datas_for_current_logged_in_user.size() > 0)
         {
+            //this outer while will be executed until
+            //the input file stream for students' credentials data reach to the end of the file
             while(!input_file_student_creds.eof())
             {
+
+                //we are getting each line from the teachers' credentials data input file stream separated by newline delimeter
+                //and storing the individual line in a temp_data for a sudden period
                 getline(input_file_student_creds, temp_data);
+
+                //converting the temp_data variable's string into stringstream
+                //so that we can apply the getline() function on the temp_data again
+                //we will apply the getline function again to separate each comma delimetered strings which are being contained by
+                //the temp_data
                 stringstream temp_stream_for_student_cred(temp_data);
+
+                //string type vector
+                //this temp vector will contain each data separated by comma delimeter which we will get from the temp_data
                 vector<string> temp_vector_for_student_cred;
 
+
+                //the following while loop will run until there is no comma delimeter
+                //and it will separate each string by comma delimeter
+                //and will store it to the temp_data variable
+                //then the inside of the body of the while loop will run the statement
+                //which is going to store each separated data inside the temp_stream_for_student_cred vector
                 while(getline(temp_stream_for_student_cred, temp_data, ','))
                 {
                     temp_vector_for_student_cred.push_back(temp_data);
                 }
 
+                //the following for loop is going to re-organizing the two vectors and going to store them into one 2d string data type vector
+                //earlier we got the enrolled students course data and enrolled students credentials info
+                //now we are going to go through each element of those vectors and going to store those
+                //elements in a separate 2d vector
+                //also the following for loop's body will include the serial number of the each student
                 for(auto course_info:students_course_datas_for_current_logged_in_user)
                 {
                     if(course_info[STUDENT_ENROLLED_TABLE_HEADERS::STUDENT_USERNAME] == temp_vector_for_student_cred[TABLE_HEADERS_CRED::USER_NAME])
@@ -1197,6 +1357,9 @@ void show_students_list()
                     }
                 }
 
+                //the following statement will push the temp_vector inside the cell_datas which we will need later to show the table
+                //and the following statement will clear the temp_vecotr
+                //because we will need it to store new data when the program go through the while loop again
                 if(temp_vector.size() > 0)
                 {
                     cell_datas.push_back(temp_vector);
@@ -1206,6 +1369,7 @@ void show_students_list()
 
 
 
+            //closing the input file stream
             input_file_enrolled_student.close();
             input_file_student_creds.close();
 
@@ -1214,6 +1378,9 @@ void show_students_list()
                  << "********************* Enrolled Students List ********************" << endl
                  << endl;
 
+
+            //calculating widths of the table
+            //showing the enrolled student in a tabular format
             calculate_width_of_table_columns(cell_datas.size(), cell_datas[0].size(), cell_datas, &column_widths);
 
             get_secondary_color();
@@ -1247,6 +1414,10 @@ void show_students_list()
 
     }
 
+    //this condition will executed if there is any enrolled student
+    //with the current teacher
+    //the following function will show the menu
+    //so that the teacher can perform assign marks, delete student from the record etc.
     if(cell_datas.size() > 0)
         option_selection_for_student_data_modification(&cell_datas, &column_widths);
 
@@ -1254,34 +1425,71 @@ void show_students_list()
 
 }
 
+//function body to show registered teachers list in the student's account dashboard
 void show_teachers_list()
 {
+
+    //2d string data type vector to store registered teachers' info
     vector<vector<string>> cell_datas = {{"Serial Number", "First Name", "Last Name", "User Name"}};
+
+    //int data type vector to hold the widths of the columns of the enrolled students table
     vector<int> column_widths;
-    string file_name = TEACHER_CRED_FILE_NAME;
 
-    ifstream input_file(file_name);
+    //input file stream for teachers credentials data file
+    ifstream input_file(TEACHER_CRED_FILE_NAME);
 
+    //if the file openeded correctly then the following inside body of the if condition
+    //will be executed
     if(input_file.good())
     {
+        //int data type variable
+        //this variable will be used to keep track of the
+        //serial number of the registered teacher
         int index = 0;
+
+        //this outer while will be executed until
+        //the input file stream for teachers credentials data reach to the end of the file
         while(!input_file.eof())
             {
                 index++;
+
+                //string type temp variable
+                //this variable will contain each line from the input file stream for a sudden period
+                //the datas will be for teachers' credentials
                 string temp_data = "";
+
+                //string type vector
+                //this temp vector will contain each data separated by comma delimeter which we will get from the temp_string
                 vector<string> temp_vector;
 
+                //pushing the serial number of the current teach inside the temp vector
                 temp_vector.push_back(to_string(index));
 
+                //we are getting each line from the teachers' credentials data input file stream separated by newline delimeter
+                //and storing the individual line in a temp_data for a sudden period
                 getline(input_file, temp_data);
+
+                //converting the temp_data variable's string into stringstream
+                //so that we can apply the getline() function on the temp_data again
+                //we will apply the getline function again to separate each comma delimetered strings which are being contained by
+                //the temp_data
                 stringstream temp_stream(temp_data);
 
+                //the following while loop will run until there is no comma delimeter
+                //and it will separate each string by comma delimeter
+                //and will store it to the temp_data variable
+                //then the inside of the body of the while loop will run the statement
+                //which is going to store each separated data inside the temp_stream_for_student_cred vector
                 while(getline(temp_stream, temp_data, ','))
                 {
                     temp_vector.push_back(temp_data);
                 }
+
+                //the following statement will push the temp_vector inside the cell_datas which we will need later to show the table
                 cell_datas.push_back(temp_vector);
             }
+
+            //closing the input file stream
             input_file.close();
 
             get_success_color();
@@ -1289,6 +1497,8 @@ void show_teachers_list()
                  << "********************* Course Info ********************" << endl
                  << endl;
 
+             //calculating widths of the table
+            //showing the enrolled student in a tabular format
             calculate_width_of_table_columns(cell_datas.size(), cell_datas[0].size(), cell_datas, &column_widths);
 
             get_primary_color();
@@ -1296,6 +1506,9 @@ void show_teachers_list()
             draw_table_cells(cell_datas.size(), cell_datas[0].size(), cell_datas, column_widths);
             draw_horizontal_line(column_widths, '=');
 
+
+            //this condition will executed if the current logged in user is not enrolled
+            //the following function will ask the current student about the enrollment to any teacher
             if(logged_in_user_info_vec[TABLE_HEADERS_CRED::STUDENT_ENROLL_STATUS] == to_string(STUDENT_ENROLL_STATUS::NOT_ENROLLED))
             {
                 enroll_student(cell_datas);
@@ -1320,31 +1533,69 @@ void show_teachers_list()
 
 }
 
+//function body to for student's enrollment operation
 void enroll_student(vector<vector<string>> teachers_list)
 {
+    //int data type for storing teachers serial number
     int selected_teacher;
+
+    //the foloowing 2d string data type vector is to store the students' credentials info
     vector<vector<string>> student_cred_cell_datas;
 
     cout << "Select a teacher from the above to enroll. Select any positive non-zero integer number\t";
     cin >> selected_teacher;
 
+    //string variables to store temp file name
+    //and to store the file name that store the students' credentials data
     string temp_file_name = TEMP_FILE;
     string file_name = STUDENT_CRED_FILE_NAME;
+
+    //input file stream for students' credentials data file
     ifstream input_file_student_cred(file_name);
+
+    //output file stream for temp file
     ofstream output_file_student_cred;
 
+    //this outer while will be executed until
+    //the input file stream for students credentials data reach to the end of the file
     while(!input_file_student_cred.eof())
     {
+
+        //string type temp variable
+        //this variable will contain each line from the input file stream for a sudden period
+        //the datas will be for students' credentials
         string temp_data = "";
+
+        //string type vector
+        //this temp vector will contain each data separated by comma delimeter which we will get from the temp_string
         vector<string> temp_vector;
 
+        //we are getting each line from the students' credentials data input file stream separated by newline delimeter
+        //and storing the individual line in a temp_data for a sudden period
         getline(input_file_student_cred, temp_data);
+
+        //converting the temp_data variable's string into stringstream
+        //so that we can apply the getline() function on the temp_data again
+        //we will apply the getline function again to separate each comma delimetered strings which are being contained by
+        //the temp_data
         stringstream temp_stream(temp_data);
 
+        //the following while loop will run until there is no comma delimeter
+        //and it will separate each string by comma delimeter
+        //and will store it to the temp_data variable
+        //then the inside of the body of the while loop will run the statement
+        //which is going to store each separated data inside the temp_vector vector
         while(getline(temp_stream, temp_data, ','))
         {
             temp_vector.push_back(temp_data);
         }
+
+        //the following if condition checks if the temp vector has any username similar as current
+        //logged in student's username
+        //if it is true then we will change the enroll status of the logged in user
+        //in both temp vector and the logged_in_user_info_vec vector
+        //then we will push the temp_vector inside the student_cred_cell_datas
+        //if the condition is not true then the else statement will be executed without modification anything
         if(temp_vector[TABLE_HEADERS_CRED::USER_NAME] == logged_in_user_info_vec[TABLE_HEADERS_CRED::USER_NAME])
         {
             temp_vector[TABLE_HEADERS_CRED::STUDENT_ENROLL_STATUS] = to_string(STUDENT_ENROLL_STATUS::ENROLLED);
@@ -1354,12 +1605,18 @@ void enroll_student(vector<vector<string>> teachers_list)
         else
             student_cred_cell_datas.push_back(temp_vector);
     }
+
+    //closing the input file stream
     input_file_student_cred.close();
 
+    //removing the previous file that contained the students' credentials data from the storage
     remove(file_name.c_str());
 
+    //opening the output temp file
     output_file_student_cred.open(temp_file_name, ios::app);
 
+    //this for loop will go through the 2d string data type vector which we modified earlier
+    //then it will store the data into the temp output file
     for(int row = 0; row < student_cred_cell_datas.size(); row++)
     {
         for(int column = 0; column < student_cred_cell_datas[row].size(); column++)
@@ -1374,40 +1631,62 @@ void enroll_student(vector<vector<string>> teachers_list)
         }
     }
 
+    //closing the output temp file stream
     output_file_student_cred.close();
+
+    //renaming the temp file with our previously deleted file name
     rename(temp_file_name.c_str(), file_name.c_str());
 
+    //output file stream for enrolled students data
     ofstream output_file_enrolled_student;
     output_file_enrolled_student.open(ENROLLED_STUDENT_DATA_FILE_NAME, ios::app);
 
+    //if the output file stream opened correctly then the else condition will be executed
     if(!output_file_enrolled_student)
     {
         cout << "ERROR: Something went wrong! Could not open the file" << endl;
     }
     else
     {
+        //boolean data type variable to store if the file exists
         bool data_exists_in_enrolled_students_file = false;
+
+        //string type temp variable
+        //this variable will contain each line from the input file stream for a sudden period
+        //the datas will be for enrolled student's course info
         string temp_data = "";
 
+        //input file stream to read enrolled students' datas
         ifstream input_file_enrolled_students(ENROLLED_STUDENT_DATA_FILE_NAME);
 
+        //if the input file stream can be opened
+        //then it will read the data and the data(each line) will be stored in the temp_data variable
+        //then it will check if the temp_data size > 0
+        //which means that the file contains some data
+        //if that is true the the bool variable will be set to true
         if(input_file_enrolled_students)
         {
             getline(input_file_enrolled_students, temp_data);
             if(temp_data.size() > 0)
                 data_exists_in_enrolled_students_file = true;
         }
+
+        //closing the input file stream
         input_file_enrolled_students.close();
 
+        //if the boolean variable is true
+        //then the following statement will put a newline inside the output file stream
         if(data_exists_in_enrolled_students_file)
             output_file_enrolled_student << endl;
 
+        //storing the newly enrolled student's course info inside the output file
         output_file_enrolled_student << logged_in_user_info_vec[TABLE_HEADERS_CRED::USER_NAME] << ",";
         output_file_enrolled_student << teachers_list[selected_teacher][TABLE_HEADERS_CRED::USER_NAME+1] << ",";
         output_file_enrolled_student << NOT_GRADED << ",";
         output_file_enrolled_student << NOT_GRADED << ",";
         output_file_enrolled_student << NOT_GRADED;
 
+        //closing the output file
         output_file_enrolled_student.close();
 
         cout << "Enrolled to " << teachers_list[selected_teacher][TABLE_HEADERS_CRED::FIRST_NAME+1] << " "
@@ -1416,10 +1695,17 @@ void enroll_student(vector<vector<string>> teachers_list)
     }
 }
 
+//function body for showing the option selection for enrolled student
+//this function is for teacher's dashboard
 void option_selection_for_student_data_modification(vector<vector<string>>* student_list, vector<int>* column_widths)
 {
+    //this infinite loop will be run over and over again
+    //until the user put the input to return back to the
+    //dashboard
     while(true)
     {
+
+        //clearing the console screen
         system("cls");
 
         get_success_color();
@@ -1427,6 +1713,8 @@ void option_selection_for_student_data_modification(vector<vector<string>>* stud
                  << "********************* Enrolled Students List ********************" << endl
                  << endl;
 
+        //calculating the column widths of the table
+        //then showing the enrolled students list in the table
         get_secondary_color();
         calculate_width_of_table_columns(student_list->size(), student_list->at(0).size(), *student_list, column_widths);
         draw_horizontal_line(*column_widths, '=');
@@ -1450,11 +1738,14 @@ void option_selection_for_student_data_modification(vector<vector<string>>* stud
         get_warning_color();
         cout << "Select any option from the above. Select only non-zero integer within above range!\t";
 
+        //int data type variable to store selected option
         int selected_option;
 
         cin >> selected_option;
 
         cout << endl;
+
+        //enum data type to refer to the option list
         enum SELECT_OPTION
         {
             ASSIGN_MARKS = 1,
@@ -1463,6 +1754,8 @@ void option_selection_for_student_data_modification(vector<vector<string>>* stud
             RETURN_TO_DASHBOARD
         };
 
+        //based on the selected_option input
+        //the following switch statement will run any of the following functions
         switch(selected_option)
         {
             case SELECT_OPTION::ASSIGN_MARKS:
@@ -1480,19 +1773,25 @@ void option_selection_for_student_data_modification(vector<vector<string>>* stud
                 cout << "Invalid input out of range! Try again" << endl;
         }
 
+        //if the selected option is for returning back to
+        //the dashboard then the while loop will break
         if(selected_option == SELECT_OPTION::RETURN_TO_DASHBOARD)
             break;
     }
 }
 
+//function body to assign marks to the enrolled student
 void assign_marks(vector<vector<string>>* student_list, vector<int>* column_widths)
 {
     get_warning_color();
     cout << "Select a student by his/her serial number to assign marks. Select only non-zero integer number." << endl;
     cout << "Type 0 to return to the dashboard\t";
 
+    //int data type variable to store selected student's serial number
     int selected_student;
 
+    //this infinite while loop will loop execute
+    //until it gets valid input
     while(true)
     {
         cin >> selected_student;
@@ -1516,6 +1815,8 @@ void assign_marks(vector<vector<string>>* student_list, vector<int>* column_widt
     }
 
     if(selected_student != 0){
+
+        //enum data type to refer to the students list tables headers
         enum STUDENT_LIST_TABLE_HEADRES_INDEX
         {
             SERIAL_NUMBER = 0,
@@ -1527,6 +1828,7 @@ void assign_marks(vector<vector<string>>* student_list, vector<int>* column_widt
             CHEMISTRY
         };
 
+        //int data type to store the marks of the math, physics and chemistry course
         int math_number, physics_number, chemistry_number;
 
         get_warning_color();
@@ -1549,26 +1851,60 @@ void assign_marks(vector<vector<string>>* student_list, vector<int>* column_widt
         cin >> chemistry_number;
         cout << endl;
 
+        //based on the user input for the marks
+        //the following statements will change the marks of the student_list vector address
         student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::MATH] = math_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(math_number);
         student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::PHYSICS] = physics_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(physics_number);
         student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::CHEMISTRY] = chemistry_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(chemistry_number);
 
+        //2d string type vector to store all the students along with the modified student
         vector<vector<string>> modified_student_datas;
+
+        //input file stream for enrolled student data
         ifstream input_file(ENROLLED_STUDENT_DATA_FILE_NAME);
+
+        //output file stream for temp file,
+        //the following function also has appending flag as its second argument
         ofstream output_file(TEMP_FILE, ios::app);
 
+        //this outer while will be executed until
+        //the input file stream for enrolled students data reach to the end of the file
         while(!input_file.eof())
         {
+            //string type temp variable
+            //this variable will contain each line from the input file stream for a sudden period
+            //the datas will be for enrolled students info
             string temp_data = "";
+
+            //string type vector
+            //this temp vector will contain each data separated by comma delimeter which we will get from the temp_string
             vector<string> temp_vector;
 
+             //we are getting each line from the enrolled students' data input file stream separated by newline delimeter
+            //and storing the individual line in a temp_data for a sudden period
             getline(input_file, temp_data);
+
+            //converting the temp_data variable's string into stringstream
+            //so that we can apply the getline() function on the temp_data again
+            //we will apply the getline function again to separate each comma delimetered strings which are being contained by
+            //the temp_data
             stringstream temp_stream(temp_data);
 
+            //the following while loop will run until there is no comma delimeter
+            //and it will separate each string by comma delimeter
+            //and will store it to the temp_data variable
+            //then the inside of the body of the while loop will run the statement
+            //which is going to store each separated data inside the temp_vector vector
             while(getline(temp_stream, temp_data, ','))
             {
                 temp_vector.push_back(temp_data);
             }
+
+            //the following function will check if the temp vector's user name is similar to the
+            //students list's selected student's username
+            //if it is true then the temp vectors course info will be chenged
+            //then we will push the temp vector inside the modified vector
+            //if it is not true then the data will unchanged as it was
             if(temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::STUDENT_USERNAME] == student_list->at(selected_student)[STUDENT_LIST_TABLE_HEADRES_INDEX::USER_NAME])
             {
                 temp_vector[STUDENT_ENROLLED_TABLE_HEADERS::MATH] = math_number == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(math_number);
@@ -1579,10 +1915,15 @@ void assign_marks(vector<vector<string>>* student_list, vector<int>* column_widt
             else
                 modified_student_datas.push_back(temp_vector);
         }
+
+        //closing the file stream
         input_file.close();
 
+        //removing the enrolled students file from the storage
         remove(ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
 
+        //this for loop will go through the 2d string data type vector which we modified earlier
+        //then it will store the data into the temp output file
         for(int row = 0; row < modified_student_datas.size(); row++)
         {
             for(int column = 0; column < modified_student_datas[row].size(); column++)
@@ -1597,8 +1938,10 @@ void assign_marks(vector<vector<string>>* student_list, vector<int>* column_widt
             }
         }
 
+        //closing the output file stream
         output_file.close();
 
+        //renaming the temp file with our previously deleted file name
         rename(TEMP_FILE.c_str(), ENROLLED_STUDENT_DATA_FILE_NAME.c_str());
 
         get_success_color();
@@ -1620,8 +1963,12 @@ void update_marks(vector<vector<string>>* student_list, vector<int>* column_widt
     cout << endl;
     cout << "Select a student by his/her serial number to update marks. Select only positive integer number.\n"
          << "Press 0 to terminate the operation\t";
+    //int data type variables to store selected student's serial number,
+    //selected option and updated marks
     int selected_student, selected_option, updated_marks;
 
+    //this infinite while loop will loop execute
+    //until it gets valid input
     while(true)
     {
         cin >> selected_student;
@@ -1646,6 +1993,7 @@ void update_marks(vector<vector<string>>* student_list, vector<int>* column_widt
 
     if(selected_student != 0)
     {
+        //enum data type to refer to the students list tables headers
         enum STUDENT_LIST_TABLE_HEADRES_INDEX
         {
             SERIAL_NUMBER = 0,
@@ -1674,6 +2022,8 @@ void update_marks(vector<vector<string>>* student_list, vector<int>* column_widt
         cout << "Type 0 to terminate the operation\t" << endl;
 
 
+        //this infinite while loop will loop execute
+        //until it gets valid input
         while(true)
         {
             cin >> selected_option;
@@ -1708,6 +2058,10 @@ void update_marks(vector<vector<string>>* student_list, vector<int>* column_widt
 
             cout << endl;
             get_default_color();
+
+            //based on the selected option input any one of the following case will be executed
+            //here we are re-assigning the selected_option varaible with the position of the course name in enrolled students' data file
+            //also we are assigning the position of the course in out students' list table into idx_for_student_list variable
             switch(selected_option)
             {
                 case 1:
@@ -1734,15 +2088,31 @@ void update_marks(vector<vector<string>>* student_list, vector<int>* column_widt
             {
                 student_list->at(selected_student)[idx_for_student_list] = updated_marks == NOT_GRADED_SYMBOL ? "Not Graded" : to_string(updated_marks);
 
+                //2d string data type vector to store all the enrolled students list with the modified student
                 vector<vector<string>> modified_student_datas;
+
+                //input file stream for enrolled students data
                 ifstream input_file(ENROLLED_STUDENT_DATA_FILE_NAME);
+
+                //output file stream for temp file
                 ofstream output_file(TEMP_FILE, ios::app);
 
+                //this outer while will be executed until
+                //the input file stream for enrolled students data reach to the end of the file
                 while(!input_file.eof())
                 {
+
+                    //string type temp variable
+                    //this variable will contain each line from the input file stream for a sudden period
+                    //the datas will be for enrolled students info
                     string temp_data = "";
+
+                    //string type vector
+                    //this temp vector will contain each data separated by comma delimeter which we will get from the temp_string
                     vector<string> temp_vector;
 
+                    //we are getting each line from the enrolled students' data input file stream separated by newline delimeter
+                    //and storing the individual line in a temp_data for a sudden period
                     getline(input_file, temp_data);
                     stringstream temp_stream(temp_data);
 
